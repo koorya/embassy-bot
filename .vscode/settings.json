@@ -11,5 +11,11 @@
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.formatOnSave": false
+    // "editor.insertSpaces": true,
+    // "editor.tabSize": 2,
+    // "editor.autoIndent": "advanced"
   }
 }
