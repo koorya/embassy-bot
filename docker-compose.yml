@@ -1,0 +1,7 @@
+version: "3.4"
+
+services:
+  scrapper:
+    build: .
+    # container_name: embassy/scrapper
+    command: "npm start"

@@ -1,9 +1,9 @@
-from node:18.10
+FROM node:18.10
 
-workdir /usr/src/app
-copy package*.json ./
+WORKDIR /usr/src/app
+COPY package*.json ./
 
-run npm ci
-copy . . 
+RUN npm ci --omit=dev
+COPY . . 
+RUN npm run build
 
-cmd ["npm", "start"]
