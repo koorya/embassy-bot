@@ -60,7 +60,7 @@ const main = async () => {
       } else {
         mon.setUnavailable();
       }
-      timeout = setTimeout(cycle, 1000 * 10);
+      timeout = setTimeout(cycle, 1000 * 60);
     } catch (e) {
       scrapLog.error(e);
       timeout = setTimeout(cycle, 0);
