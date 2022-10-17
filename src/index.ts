@@ -1,8 +1,9 @@
-import { fetchDates } from './fetchDates';
 import { botLog, scrapLog } from './loggers/logger';
 import { Telegraf } from 'telegraf';
 import { Monitor } from './Monitor';
 import { MongoClient } from 'mongodb';
+import { EmbassyRequester } from './requester/EmbassyRequester';
+import { userData } from './const';
 
 const MONGO_USER = process.env.MONGO_USER;
 const MONGO_PASSWORD = process.env.MONGO_PASSWORD;
@@ -53,9 +54,10 @@ const main = async () => {
   );
 
   let timeout;
+  const requester = new EmbassyRequester(userData());
   const cycle = async () => {
     try {
-      if (await fetchDates()) {
+      if (await requester.checkDates()) {
         mon.setAvailable();
       } else {
         mon.setUnavailable();

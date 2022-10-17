@@ -1,7 +1,9 @@
-export const userData = {
-  phone: '998546218739',
-  firstName: 'aali',
-  lastName: 'lallni',
-  email: 'mmms',
-};
-export const service_ids = 227;
+import { ServiceIds, UserData } from './requester/EmbassyRequester';
+
+export const userData = (): UserData => ({
+  phone: '+998546218739',
+  firstName: 'Aali',
+  lastName: 'Lallni',
+  email: 'hallos99s@gmail.com',
+  serviceIds: [ServiceIds.WORKER],
+});

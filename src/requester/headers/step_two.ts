@@ -32,6 +32,12 @@ export const getStepTwoHeaders = (
       Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/index',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     },
-    body: `branch_office_id=40&_csrf-mfa-scheduler=${htmlCode}&Persons%5B0%5D%5Bfirst_name%5D=${user.firstName}&Persons%5B0%5D%5Blast_name%5D=${user.lastName}&e_mail=${user.email}%40gmail.com&phone=%2B${user.phone}`,
+    body: `branch_office_id=40&_csrf-mfa-scheduler=${htmlCode}&Persons%5B0%5D%5Bfirst_name%5D=${
+      user.firstName
+    }&Persons%5B0%5D%5Blast_name%5D=${
+      user.lastName
+    }&e_mail=${encodeURIComponent(user.email)}&phone=${encodeURIComponent(
+      user.phone
+    )}`,
     method: 'POST',
   } as RequestInit);
