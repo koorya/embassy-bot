@@ -17,28 +17,31 @@ export class EnterServiceId extends AddUserBase implements State {
     this._deps.bot.telegram.sendMessage(
       this._deps.chatId,
       'Выберете вариант регистрации',
-      Markup.inlineKeyboard([
-        Markup.button.callback(
-          'SHENGEN_SW_EST',
-          `register-user-serviceid-${ServiceIds.SHENGEN_SW_EST}`
-        ),
-        Markup.button.callback(
-          'SHENGEN_LV',
-          `register-user-serviceid-${ServiceIds.SHENGEN_LV}`
-        ),
-        Markup.button.callback(
-          'STUDENT',
-          `register-user-serviceid-${ServiceIds.STUDENT}`
-        ),
-        Markup.button.callback(
-          'CARRIER',
-          `register-user-serviceid-${ServiceIds.CARRIER}`
-        ),
-        Markup.button.callback(
-          'WORKER',
-          `register-user-serviceid-${ServiceIds.WORKER}`
-        ),
-      ])
+      Markup.inlineKeyboard(
+        [
+          Markup.button.callback(
+            'SW/EST SHENGEN',
+            `register-user-serviceid-${ServiceIds.SHENGEN_SW_EST}`
+          ),
+          Markup.button.callback(
+            'LV SHENGEN',
+            `register-user-serviceid-${ServiceIds.SHENGEN_LV}`
+          ),
+          Markup.button.callback(
+            'STUDENT',
+            `register-user-serviceid-${ServiceIds.STUDENT}`
+          ),
+          Markup.button.callback(
+            'CARRIER',
+            `register-user-serviceid-${ServiceIds.CARRIER}`
+          ),
+          Markup.button.callback(
+            'WORKER',
+            `register-user-serviceid-${ServiceIds.WORKER}`
+          ),
+        ],
+        { columns: 3 }
+      )
     );
   }
 
@@ -117,13 +120,11 @@ export class EnterPhone extends AddUserBase implements State {
       this._userData.phone = text as UserData['phone'];
       await this._deps.userController.addUser(this._userData as UserData);
       const { firstName, lastName, phone } = this.userData;
+
       await this._deps.bot.telegram.sendMessage(
         this._deps.chatId,
-        'Пользователь добавлен'
-      );
-      await this._deps.bot.telegram.sendMessage(
-        this._deps.chatId,
-        `${firstName} ${lastName} ${phone} \n ${JSON.stringify(this.userData)}`
+
+        `Пользователь добавлен\n${firstName} ${lastName} ${phone}`
       );
       return new Idle(this._deps);
     }

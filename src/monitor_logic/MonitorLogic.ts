@@ -1,21 +1,31 @@
 import { userData } from '../const';
 import { MessageController } from '../db_controllers/MessageController';
+import { UserController } from '../db_controllers/UserController';
 import { EmbassyWorkerCreator, ResType } from '../embassy_worker/EmbassyWorker';
 import { scrapLog } from '../loggers/logger';
 import { ServiceIds } from '../requester/EmbassyRequester';
 import { Monitor } from './Monitor';
+import { Registrator } from './Registrator';
 
 export class MonitorLogic {
   private _messageController: MessageController;
+  private _userController: UserController;
+  private _registrator: Registrator;
 
-  constructor(messageController: MessageController) {
+  constructor(
+    messageController: MessageController,
+    userController: UserController,
+    registrator: Registrator
+  ) {
     this._messageController = messageController;
+    this._userController = userController;
+    this._registrator = registrator;
   }
 
   async run(signal: AbortSignal) {
     const mon = new Monitor();
 
-    let registerAC = new AbortController();
+    let ac = new AbortController();
     const embassyCreator = new EmbassyWorkerCreator();
 
     mon
@@ -23,45 +33,12 @@ export class MonitorLogic {
         this._messageController.addMessage(`Появились доступные даты`);
       })
       .on('switchOn', () => {
-        console.log('Run registration');
-        registerAC = new AbortController();
-        const registrators = [userData(), userData()].map((ud) =>
-          embassyCreator.createEmbassyRegister(ud)
-        );
-        Promise.allSettled(
-          registrators.map((r, index) => {
-            //return r.registerUser(ac.signal)
-            return {
-              date: { date: '20.04.2022', time: '21:43' },
-              userData: {
-                email: 'psdpsdp@gmail.com',
-                firstName: 'ss' + index,
-                lastName: 'hh',
-                notes: 'nood',
-                phone: '+998546219578',
-                serviceIds: [ServiceIds.WORKER],
-              },
-            } as ResType;
-          })
-        )
-          .catch((r) => console.log(r))
-          .then((r) => {
-            r?.map((r) => {
-              if (r.status == 'fulfilled' && !!r.value) {
-                const {
-                  userData: { firstName, email, lastName },
-                  date: { date, time },
-                } = r.value;
-                const message = `Зарегистрирован ${firstName} ${lastName} на ${date} в ${time}. ${email}`;
-
-                this._messageController.addMessage(message);
-              }
-            });
-          });
+        ac = new AbortController();
+        this._registrator.registerAll(ac.signal);
       })
       .on('switchOff', () => {
         console.log('Stop registration');
-        registerAC.abort();
+        ac.abort();
       })
       .on('switchOff', () => {
         this._messageController.addMessage(`Даты закончились`);
@@ -72,6 +49,7 @@ export class MonitorLogic {
       clearTimeout(timeout);
     };
     signal.addEventListener('abort', onAbort, { once: true });
+
     const cycleMonitor = async () => {
       try {
         if (await embassy_monitor.isPossibleToRegister()) {

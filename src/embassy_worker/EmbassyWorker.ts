@@ -63,6 +63,12 @@ export class EmbassyRegister {
     signal.removeEventListener('abort', onAbort);
     return result;
   }
+  async registerUserFake(signal: AbortSignal) {
+    return {
+      date: { date: '20.04.2022', time: '21:43' },
+      userData: this._userData,
+    } as ResType;
+  }
 }
 
 export class EmbassyWorkerCreator {

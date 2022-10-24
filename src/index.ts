@@ -4,6 +4,8 @@ import { BotWrapper } from './bot/BotWrapper';
 import { DBCreator } from './db_controllers/db';
 import { MonitorLogic } from './monitor_logic/MonitorLogic';
 import { UserController } from './db_controllers/UserController';
+import { Registrator } from './monitor_logic/Registrator';
+import { ProxyController } from './db_controllers/ProxyController';
 
 const main = async () => {
   const ac = new AbortController();
@@ -13,16 +15,22 @@ const main = async () => {
   const chatIdController = new ChatIdController(db);
   const messageController = new MessageController(db);
   const userController = new UserController(db);
-
+  const proxyController = new ProxyController(db);
+  const registrator = new Registrator(userController, messageController);
   const bot = new BotWrapper(
     chatIdController,
     messageController,
-    userController
+    userController,
+    proxyController
   );
 
   bot.run(ac.signal);
 
-  const monitor = new MonitorLogic(messageController);
+  const monitor = new MonitorLogic(
+    messageController,
+    userController,
+    registrator
+  );
   monitor.run(ac.signal);
 
   // Enable graceful stop

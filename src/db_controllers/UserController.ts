@@ -31,4 +31,12 @@ export class UserController {
       $set: { isRegistered: true, date },
     });
   }
+  async setRegisteredByPhone(phone: UserData['phone'], date: string) {
+    await this._collection.updateOne(
+      { phone },
+      {
+        $set: { isRegistered: true, date },
+      }
+    );
+  }
 }

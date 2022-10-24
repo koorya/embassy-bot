@@ -7,28 +7,33 @@ import { State } from './DialogController/States';
 import { EnterFirstName, EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
 import { ObjectId } from 'mongodb';
+import { Registrator } from '../monitor_logic/Registrator';
+import { ProxyController } from '../db_controllers/ProxyController';
 
 export class BotWrapper {
   bot: Telegraf;
   private _chatIdController: ChatIdController;
   private _messageController: MessageController;
   private _userController: UserController;
+  private _proxyController: ProxyController;
 
   constructor(
     chatIdController: ChatIdController,
     messageController: MessageController,
-    userController: UserController
+    userController: UserController,
+    proxyController: ProxyController
   ) {
     this.bot = new Telegraf(process.env.BOT_TOKEN || '');
     this._chatIdController = chatIdController;
     this._messageController = messageController;
     this._userController = userController;
+    this._proxyController = proxyController;
   }
   configureBot() {
     const bot = this.bot;
 
     const mainMenu = Markup.keyboard(
-      ['/add_user', '/list_reg', '/list_notreg', '/list_all'],
+      ['/add_user', '/list_reg', '/list_notreg', '/list_all', '/list_proxy'],
       { columns: 3 }
     ).resize();
 
@@ -53,6 +58,7 @@ export class BotWrapper {
     const currentState = new Map<number, State>();
     bot.hears('/add_user', (ctx) => {
       // ctx.reply('Добавление пользователя');
+      ctx.deleteMessage();
       currentState.set(
         ctx.chat.id,
         new EnterServiceId(
@@ -61,6 +67,31 @@ export class BotWrapper {
         )
       );
       currentState.get(ctx.chat.id)?.ask();
+    });
+
+    bot.hears(
+      /\/add_proxy (.*):(.*)@(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})/,
+      (ctx) => {
+        this._proxyController.addProxy({
+          user: ctx.match[1],
+          pass: ctx.match[2],
+          host: ctx.match[3],
+          port: ctx.match[4],
+        });
+        ctx.reply('Прокси добавлен');
+        console.log(ctx.match);
+      }
+    );
+    bot.hears(/\/list_proxy/, async (ctx) => {
+      (await this._proxyController.getProxies()).map((p) => {
+        ctx.sendMessage(
+          `${p.host}`,
+          Markup.inlineKeyboard([
+            Markup.button.callback('Удалить', `remove-proxy-${p.host}`),
+          ])
+        );
+      });
+      console.log(ctx.match);
     });
 
     bot.hears(/\/list_((?:reg)|(?:notreg)|(?:all))/, async (ctx) => {
@@ -101,6 +132,12 @@ export class BotWrapper {
       if (!ctx.chat) return;
       ctx.answerCbQuery();
       this._userController.removeUser({ _id: new ObjectId(ctx.match[1]) });
+    });
+    bot.action(/remove-proxy-(.*)/, async (ctx) => {
+      // ctx.reply(ctx.match[0]);
+      if (!ctx.chat) return;
+      await this._proxyController.removeProxyByHost(ctx.match[1]);
+      ctx.answerCbQuery('Удален');
     });
     bot.on('text', async (ctx) => {
       const new_state = await currentState
