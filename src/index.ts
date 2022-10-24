@@ -1,81 +1,29 @@
 import { botLog, scrapLog } from './loggers/logger';
-import { Telegraf } from 'telegraf';
-import { Monitor } from './Monitor';
-import { MongoClient } from 'mongodb';
-import { EmbassyRequester } from './requester/EmbassyRequester';
+import { ServiceIds } from './requester/EmbassyRequester';
 import { userData } from './const';
-import { CaptchaHelper } from './requester/CaptchaHelper';
-
-const MONGO_USER = process.env.MONGO_USER;
-const MONGO_PASSWORD = process.env.MONGO_PASSWORD;
-const MONGO_HOST = process.env.MONGO_HOST;
-const MONGO_PORT = process.env.MONGO_PORT;
+import { EmbassyWorkerCreator, ResType } from './embassy_worker/EmbassyWorker';
+import { MessageController } from './db_controllers/MessageController';
+import { ChatIdController } from './db_controllers/ChatIdsController';
+import { BotWrapper } from './bot/BotWrapper';
+import { DBCreator } from './db_controllers/db';
+import { MonitorLogic } from './monitor_logic/MonitorLogic';
 
 const main = async () => {
-  const uri = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}`;
-  const client = new MongoClient(uri);
-  const db = client.db('botSubscribers');
-  const collection = db.collection('chatId');
-  // await collection.drop();
-  const chatIds: number[] = (await collection.find().toArray()).map(
-    ({ chatId }) => chatId
-  );
+  const ac = new AbortController();
 
-  const bot = new Telegraf(process.env.BOT_TOKEN || '');
+  const db = new DBCreator().create();
 
-  bot.start(async (ctx) => {
-    botLog.info(`start on chat id: ${ctx.chat.id}`);
-    if (!chatIds.includes(ctx.chat.id)) {
-      chatIds.push(ctx.chat.id);
-      await collection.insertOne({
-        chatId: ctx.chat.id,
-        username: ctx.message.from.username,
-      });
-      ctx.reply(
-        'Добро пожаловать! Я сообщу вам о появлении доступных дат для получения визы.'
-      );
-    }
-  });
+  const chatIdController = new ChatIdController(db);
+  const messageController = new MessageController(db);
+  const bot = new BotWrapper(chatIdController, messageController);
 
-  bot.launch();
+  bot.run(ac.signal);
 
-  const mon = new Monitor(
-    () =>
-      chatIds.forEach((id) =>
-        bot.telegram
-          .sendMessage(id, 'Появились доступные даты')
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
-      ),
-    () =>
-      chatIds.forEach((id) =>
-        bot.telegram
-          .sendMessage(id, 'Даты закончились')
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
-      )
-  );
-
-  let timeout;
-  const captcha_helper = new CaptchaHelper(process.env.TWO_CAPTCHA_KEY || '');
-
-  const requester = new EmbassyRequester(userData(), captcha_helper);
-  const cycle = async () => {
-    try {
-      if (await requester.checkDates()) {
-        mon.setAvailable();
-      } else {
-        mon.setUnavailable();
-      }
-      timeout = setTimeout(cycle, 1000 * 60);
-    } catch (e) {
-      scrapLog.error(e);
-      timeout = setTimeout(cycle, 0);
-    }
-  };
-
-  cycle();
+  const monitor = new MonitorLogic(messageController);
+  monitor.run(ac.signal);
 
   // Enable graceful stop
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  process.once('SIGINT', () => ac.abort('SIGINT'));
+  process.once('SIGTERM', () => ac.abort('SIGTERM'));
 };
 main();

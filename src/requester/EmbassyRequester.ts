@@ -8,6 +8,7 @@ import { CaptchaHelper } from './CaptchaHelper';
 import { getStepFiveParams } from './headers/step_five';
 import { getStepFourParams } from './headers/step_four';
 import { getAvailableOptions } from './headers/available_time';
+import { ResType } from '../embassy_worker/EmbassyWorker';
 type Cookies = {
   sessionCookie: string;
   schedulerCookie: string;
@@ -49,7 +50,7 @@ export class EmbassyRequester {
   private _userData: UserData;
   private _parseHelper: ParseHelper;
   private _captchaHelper: CaptchaHelper | null;
-  private _date: { date: string; time: string } | null = null;
+  private _date?: { date: string; time: string };
 
   constructor(userData: UserData, captchaHelper?: CaptchaHelper) {
     this._userData = userData;
@@ -267,14 +268,18 @@ export class EmbassyRequester {
     return { success: !code };
   }
 
-  isSuccessRegistration() {
-    return {
-      success: this._stepNumber == RequesterStep.FIVE,
-      info: {
-        userData: this._userData,
-        date: this._date,
-      },
-    };
+  isSuccessRegistration():
+    | { success: true; info: ResType }
+    | { success: false; info: undefined } {
+    if (this._stepNumber == RequesterStep.FIVE && this._date)
+      return {
+        success: true,
+        info: {
+          userData: this._userData,
+          date: this._date,
+        },
+      };
+    else return { success: false, info: undefined };
   }
   async toStep3() {
     const userData = this._userData;

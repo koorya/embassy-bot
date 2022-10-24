@@ -6,36 +6,45 @@ import {
   UserData,
 } from '../requester/EmbassyRequester';
 
-type ResType = {
+export type ResType = {
   userData: UserData;
   date: {
     date: string;
     time: string;
-  } | null;
+  };
 };
-
-export class EmbassyWorker {
+export class EmbassyChecker {
   private _requester: EmbassyRequester;
-  private _parallel_factor: number;
-  constructor(requester: EmbassyRequester, parallel_factor: number) {
+  constructor(requester: EmbassyRequester) {
     this._requester = requester;
-    this._parallel_factor = parallel_factor;
   }
   async isPossibleToRegister() {
     return await this._requester.checkDates();
   }
+}
 
-  async registerUser(userData: UserData) {
+export class EmbassyRegister {
+  private _parallel_factor: number;
+  private _userData: UserData;
+  constructor(userData: UserData, parallel_factor: number) {
+    this._parallel_factor = parallel_factor;
+    this._userData = userData;
+  }
+
+  async registerUser(signal: AbortSignal) {
     const n = this._parallel_factor;
-    userData.serviceIds = [ServiceIds.STUDENT];
+    // this._userData.serviceIds = [ServiceIds.STUDENT];
     const captchaKey = process.env.TWO_CAPTCHA_KEY || '';
     const ac = new AbortController();
-
+    const onAbort = () => {
+      ac.abort();
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
     const register =
       (idx: number) =>
       async (resolve: (res: ResType) => void, reject: () => void) => {
         const captcha_helper = new CaptchaHelper(captchaKey);
-        const requester = new EmbassyRequester(userData, captcha_helper);
+        const requester = new EmbassyRequester(this._userData, captcha_helper);
         const step4 = await requester.requestUpToStepFour();
         while (!requester.isSuccessRegistration() && !ac.signal.aborted) {
           console.log(await step4.requestStepFive(ac.signal));
@@ -50,18 +59,21 @@ export class EmbassyWorker {
     ).catch((r) => {});
     ac.abort();
     console.log(new Date());
+
+    signal.removeEventListener('abort', onAbort);
     return result;
   }
 }
 
 export class EmbassyWorkerCreator {
   private _parallel_factor: number;
-  constructor(parallel_factor: number) {
-    this._parallel_factor = parallel_factor;
+  constructor(parallel_factor?: number) {
+    if (!parallel_factor)
+      this._parallel_factor = parseInt(process.env.PARALLEL_FACTOR || '20');
+    else this._parallel_factor = parallel_factor;
   }
-  createEmbassyWorker(userData: UserData) {
-    const requester = new EmbassyRequester(userData);
-    return new EmbassyWorker(requester, this._parallel_factor);
+  createEmbassyRegister(userData: UserData) {
+    return new EmbassyRegister(userData, this._parallel_factor);
   }
   createEmbassyMonitor() {
     const requester = new EmbassyRequester({
@@ -72,6 +84,6 @@ export class EmbassyWorkerCreator {
       phone: process.env.DEFAULT_PHONE,
       serviceIds: [ServiceIds.SHENGEN_LV],
     } as UserData);
-    return new EmbassyWorker(requester, 0);
+    return new EmbassyChecker(requester);
   }
 }
