@@ -4,6 +4,7 @@ import { Monitor } from './Monitor';
 import { MongoClient } from 'mongodb';
 import { EmbassyRequester } from './requester/EmbassyRequester';
 import { userData } from './const';
+import { CaptchaHelper } from './requester/CaptchaHelper';
 
 const MONGO_USER = process.env.MONGO_USER;
 const MONGO_PASSWORD = process.env.MONGO_PASSWORD;
@@ -54,7 +55,9 @@ const main = async () => {
   );
 
   let timeout;
-  const requester = new EmbassyRequester(userData());
+  const captcha_helper = new CaptchaHelper(process.env.TWO_CAPTCHA_KEY || '');
+
+  const requester = new EmbassyRequester(userData(), captcha_helper);
   const cycle = async () => {
     try {
       if (await requester.checkDates()) {

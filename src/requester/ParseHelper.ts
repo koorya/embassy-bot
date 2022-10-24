@@ -11,7 +11,8 @@ export class ParseHelper {
     };
   }
   parseStepCode(text: string) {
-    const code = /"_csrf-mfa-scheduler"\s*value="([^"]*)">/.exec(text) || [];
+    const code = /"_csrf-mfa-scheduler"\s*value="([^"]*)">/.exec(text);
+    if (!code) return null;
     const htmlCode = encodeURIComponent(code[1]);
     return htmlCode;
   }

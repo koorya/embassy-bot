@@ -7,6 +7,9 @@
     "start": "node -r dotenv/config build/index.js",
     "build": "npx tsc",
     "dev": "nodemon --exec ts-node -r dotenv/config src/index.ts",
+    "solvecaptcha": "ts-node -r dotenv/config src/scripts/SolveCaptcha.ts",
+    "register": "ts-node -r dotenv/config src/scripts/Register.ts",
+    "registerparallel": "ts-node -r dotenv/config src/scripts/RegisterParallel.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
