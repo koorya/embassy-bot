@@ -1,12 +1,9 @@
-import { botLog, scrapLog } from './loggers/logger';
-import { ServiceIds } from './requester/EmbassyRequester';
-import { userData } from './const';
-import { EmbassyWorkerCreator, ResType } from './embassy_worker/EmbassyWorker';
 import { MessageController } from './db_controllers/MessageController';
 import { ChatIdController } from './db_controllers/ChatIdsController';
 import { BotWrapper } from './bot/BotWrapper';
 import { DBCreator } from './db_controllers/db';
 import { MonitorLogic } from './monitor_logic/MonitorLogic';
+import { UserController } from './db_controllers/UserController';
 
 const main = async () => {
   const ac = new AbortController();
@@ -15,7 +12,13 @@ const main = async () => {
 
   const chatIdController = new ChatIdController(db);
   const messageController = new MessageController(db);
-  const bot = new BotWrapper(chatIdController, messageController);
+  const userController = new UserController(db);
+
+  const bot = new BotWrapper(
+    chatIdController,
+    messageController,
+    userController
+  );
 
   bot.run(ac.signal);
 
