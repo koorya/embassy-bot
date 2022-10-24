@@ -6,4 +6,5 @@ export const userData = (): UserData => ({
   lastName: 'Fermentum',
   email: 'vestibulum22@gmail.com',
   serviceIds: [ServiceIds.WORKER],
+  notes: 'nubmer',
 });

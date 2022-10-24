@@ -27,6 +27,7 @@ export type UserData = {
   lastName: string;
   email: `${string}@${string}`;
   serviceIds: ServiceIds[];
+  notes: string;
 };
 
 enum RequesterStep {
@@ -48,6 +49,7 @@ export class EmbassyRequester {
   private _userData: UserData;
   private _parseHelper: ParseHelper;
   private _captchaHelper: CaptchaHelper | null;
+  private _date: { date: string; time: string } | null = null;
 
   constructor(userData: UserData, captchaHelper?: CaptchaHelper) {
     this._userData = userData;
@@ -237,7 +239,7 @@ export class EmbassyRequester {
         signal
       )) || '';
 
-    if (isAborted) return '';
+    if (isAborted) return;
     const { url, options } = getStepFiveParams({
       notes_public,
       reCaptcha,
@@ -249,7 +251,7 @@ export class EmbassyRequester {
 
     const text = await res.text();
 
-    if (isAborted) return '';
+    if (isAborted) return;
     const code = this._parseHelper.parseStepCode(text);
     if (code) {
       this._step4Code = code;
@@ -262,10 +264,17 @@ export class EmbassyRequester {
     }
 
     signal.removeEventListener('abort', onAbort);
-    return this._step4Code;
+    return { success: !code };
   }
+
   isSuccessRegistration() {
-    return this._stepNumber == RequesterStep.FIVE;
+    return {
+      success: this._stepNumber == RequesterStep.FIVE,
+      info: {
+        userData: this._userData,
+        date: this._date,
+      },
+    };
   }
   async toStep3() {
     const userData = this._userData;
@@ -322,10 +331,11 @@ export class EmbassyRequester {
 
     if (!selectedTime) throw Error('Not found Dates');
 
+    this._date = selectedTime;
     console.log(selectedTime.date, selectedTime.time);
     return await this._requestStepFour(selectedTime.date, selectedTime.time);
   }
   async requestStepFive(signal: AbortSignal = new AbortController().signal) {
-    return await this._requestStepFive('mynotes', signal);
+    return await this._requestStepFive(this._userData.notes, signal);
   }
 }
