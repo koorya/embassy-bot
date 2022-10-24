@@ -1,15 +1,12 @@
-import { userData } from '../const';
 import { MessageController } from '../db_controllers/MessageController';
 import { UserController } from '../db_controllers/UserController';
 import { EmbassyWorkerCreator, ResType } from '../embassy_worker/EmbassyWorker';
 import { scrapLog } from '../loggers/logger';
-import { ServiceIds } from '../requester/EmbassyRequester';
 import { Monitor } from './Monitor';
 import { Registrator } from './Registrator';
 
 export class MonitorLogic {
   private _messageController: MessageController;
-  private _userController: UserController;
   private _registrator: Registrator;
 
   constructor(
@@ -18,7 +15,6 @@ export class MonitorLogic {
     registrator: Registrator
   ) {
     this._messageController = messageController;
-    this._userController = userController;
     this._registrator = registrator;
   }
 

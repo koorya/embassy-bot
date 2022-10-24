@@ -1,6 +1,4 @@
-import { userData } from '../const';
 import { CaptchaHelper } from '../requester/CaptchaHelper';
-import { EmbassyRequester, ServiceIds } from '../requester/EmbassyRequester';
 (async () => {
   // const data = userData();
   // data.serviceIds = [ServiceIds.STUDENT];

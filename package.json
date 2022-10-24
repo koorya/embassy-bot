@@ -11,6 +11,7 @@
     "register": "ts-node -r dotenv/config src/scripts/Register.ts",
     "registerparallel": "ts-node -r dotenv/config src/scripts/RegisterParallel.ts",
     "dropdb": "ts-node -r dotenv/config src/scripts/dropDB.ts",
+    "getproxies": "ts-node -r dotenv/config src/scripts/getProxies.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

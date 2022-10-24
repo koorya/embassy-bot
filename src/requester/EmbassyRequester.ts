@@ -9,6 +9,7 @@ import { getStepFiveParams } from './headers/step_five';
 import { getStepFourParams } from './headers/step_four';
 import { getAvailableOptions } from './headers/available_time';
 import { ResType } from '../embassy_worker/EmbassyWorker';
+import { ProxyCreds } from '../db_controllers/ProxyController';
 type Cookies = {
   sessionCookie: string;
   schedulerCookie: string;
@@ -51,11 +52,17 @@ export class EmbassyRequester {
   private _parseHelper: ParseHelper;
   private _captchaHelper: CaptchaHelper | null;
   private _date?: { date: string; time: string };
+  private _proxy: ProxyCreds | null;
 
-  constructor(userData: UserData, captchaHelper?: CaptchaHelper) {
+  constructor(
+    userData: UserData,
+    proxy: ProxyCreds | null,
+    captchaHelper?: CaptchaHelper
+  ) {
     this._userData = userData;
     this._parseHelper = new ParseHelper();
     this._captchaHelper = captchaHelper || null;
+    this._proxy = proxy;
   }
 
   private async _step1() {
@@ -277,6 +284,7 @@ export class EmbassyRequester {
         info: {
           userData: this._userData,
           date: this._date,
+          proxy: this._proxy?.host,
         },
       };
     else return { success: false, info: undefined };

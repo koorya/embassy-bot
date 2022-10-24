@@ -16,7 +16,11 @@ const main = async () => {
   const messageController = new MessageController(db);
   const userController = new UserController(db);
   const proxyController = new ProxyController(db);
-  const registrator = new Registrator(userController, messageController);
+  const registrator = new Registrator(
+    userController,
+    messageController,
+    proxyController
+  );
   const bot = new BotWrapper(
     chatIdController,
     messageController,

@@ -84,8 +84,10 @@ export class BotWrapper {
     );
     bot.hears(/\/list_proxy/, async (ctx) => {
       (await this._proxyController.getProxies()).map((p) => {
+        const used = p.history.length;
+        const when = p.history.pop()?.date.toLocaleDateString();
         ctx.sendMessage(
-          `${p.host}`,
+          `${p.host} использован ${when} всего ${used}`,
           Markup.inlineKeyboard([
             Markup.button.callback('Удалить', `remove-proxy-${p.host}`),
           ])

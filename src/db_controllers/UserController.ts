@@ -2,7 +2,10 @@ import { Collection, Db, WithId } from 'mongodb';
 import { UserData } from '../requester/EmbassyRequester';
 
 type ExtendedUserData = UserData &
-  ({ isRegistered: true; date: string } | { isRegistered: false });
+  (
+    | { isRegistered: true; date: string; proxy?: string }
+    | { isRegistered: false }
+  );
 
 export class UserController {
   private _collection: Collection<ExtendedUserData>;
@@ -31,11 +34,15 @@ export class UserController {
       $set: { isRegistered: true, date },
     });
   }
-  async setRegisteredByPhone(phone: UserData['phone'], date: string) {
+  async setRegisteredByPhone(
+    phone: UserData['phone'],
+    date: string,
+    proxy?: string
+  ) {
     await this._collection.updateOne(
       { phone },
       {
-        $set: { isRegistered: true, date },
+        $set: { isRegistered: true, date, proxy },
       }
     );
   }

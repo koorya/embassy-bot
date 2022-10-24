@@ -1,4 +1,4 @@
-import { userData } from '../const';
+import { ProxyCreds } from '../db_controllers/ProxyController';
 import { CaptchaHelper } from '../requester/CaptchaHelper';
 import {
   EmbassyRequester,
@@ -12,6 +12,7 @@ export type ResType = {
     date: string;
     time: string;
   };
+  proxy?: string;
 };
 export class EmbassyChecker {
   private _requester: EmbassyRequester;
@@ -26,9 +27,11 @@ export class EmbassyChecker {
 export class EmbassyRegister {
   private _parallel_factor: number;
   private _userData: UserData;
-  constructor(userData: UserData, parallel_factor: number) {
+  private _proxy: ProxyCreds;
+  constructor(userData: UserData, proxy: ProxyCreds, parallel_factor: number) {
     this._parallel_factor = parallel_factor;
     this._userData = userData;
+    this._proxy = proxy;
   }
 
   async registerUser(signal: AbortSignal) {
@@ -44,7 +47,11 @@ export class EmbassyRegister {
       (idx: number) =>
       async (resolve: (res: ResType) => void, reject: () => void) => {
         const captcha_helper = new CaptchaHelper(captchaKey);
-        const requester = new EmbassyRequester(this._userData, captcha_helper);
+        const requester = new EmbassyRequester(
+          this._userData,
+          this._proxy,
+          captcha_helper
+        );
         const step4 = await requester.requestUpToStepFour();
         while (!requester.isSuccessRegistration() && !ac.signal.aborted) {
           console.log(await step4.requestStepFive(ac.signal));
@@ -67,6 +74,7 @@ export class EmbassyRegister {
     return {
       date: { date: '20.04.2022', time: '21:43' },
       userData: this._userData,
+      proxy: this._proxy.host,
     } as ResType;
   }
 }
@@ -78,18 +86,21 @@ export class EmbassyWorkerCreator {
       this._parallel_factor = parseInt(process.env.PARALLEL_FACTOR || '20');
     else this._parallel_factor = parallel_factor;
   }
-  createEmbassyRegister(userData: UserData) {
-    return new EmbassyRegister(userData, this._parallel_factor);
+  createEmbassyRegister(userData: UserData, proxy: ProxyCreds) {
+    return new EmbassyRegister(userData, proxy, this._parallel_factor);
   }
   createEmbassyMonitor() {
-    const requester = new EmbassyRequester({
-      email: process.env.DEFAULT_EMAIL,
-      firstName: process.env.DEFAULT_FIRSTNAME,
-      lastName: process.env.DEFAULT_LASTNAME,
-      notes: process.env.DEFAULT_NOTES,
-      phone: process.env.DEFAULT_PHONE,
-      serviceIds: [ServiceIds.SHENGEN_LV],
-    } as UserData);
+    const requester = new EmbassyRequester(
+      {
+        email: process.env.DEFAULT_EMAIL,
+        firstName: process.env.DEFAULT_FIRSTNAME,
+        lastName: process.env.DEFAULT_LASTNAME,
+        notes: process.env.DEFAULT_NOTES,
+        phone: process.env.DEFAULT_PHONE,
+        serviceIds: [ServiceIds.WORKER],
+      } as UserData,
+      null
+    );
     return new EmbassyChecker(requester);
   }
 }
