@@ -30,11 +30,7 @@ const main = async () => {
 
   bot.run(ac.signal);
 
-  const monitor = new MonitorLogic(
-    messageController,
-    userController,
-    registrator
-  );
+  const monitor = new MonitorLogic(messageController, registrator);
   monitor.run(ac.signal);
 
   // Enable graceful stop

@@ -9,11 +9,7 @@ export class MonitorLogic {
   private _messageController: MessageController;
   private _registrator: Registrator;
 
-  constructor(
-    messageController: MessageController,
-    userController: UserController,
-    registrator: Registrator
-  ) {
+  constructor(messageController: MessageController, registrator: Registrator) {
     this._messageController = messageController;
     this._registrator = registrator;
   }
@@ -64,7 +60,5 @@ export class MonitorLogic {
     };
 
     let timeout = setTimeout(cycleMonitor, 0);
-
-    cycleMonitor();
   }
 }
