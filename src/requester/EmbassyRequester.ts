@@ -11,7 +11,7 @@ import { getAvailableOptions } from './headers/available_time';
 import { ResType } from '../embassy_worker/EmbassyWorker';
 import { ProxyCreds } from '../db_controllers/ProxyController';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import fetch from "node-fetch";
+import fetch from 'node-fetch';
 type Cookies = {
   sessionCookie: string;
   schedulerCookie: string;
@@ -66,17 +66,18 @@ export class EmbassyRequester {
     this._parseHelper = new ParseHelper();
     this._captchaHelper = captchaHelper || null;
     this._proxy = proxy;
-    this._agent = this._proxy?new HttpsProxyAgent(
-      `http://${this._proxy.user}:${this._proxy.pass}@${this._proxy.host}:${this._proxy.port}`):undefined;
-
+    this._agent = this._proxy
+      ? new HttpsProxyAgent(
+          `http://${this._proxy.user}:${this._proxy.pass}@${this._proxy.host}:${this._proxy.port}`
+        )
+      : undefined;
   }
 
   private async _step1() {
     this._stepNumber = RequesterStep.IDLE;
     const response = await fetch(
       'https://pieraksts.mfa.gov.lv/ru/uzbekistan/index',
-      {...getStepOneHeaders(), agent: this._agent} 
-     
+      { ...getStepOneHeaders(), agent: this._agent }
     );
 
     scrapLog.info('requesting 1 step');
@@ -106,7 +107,15 @@ export class EmbassyRequester {
     scrapLog.info('requesting 2 step');
     const response = await fetch(
       'https://pieraksts.mfa.gov.lv/ru/uzbekistan/index',
-      {...getStepTwoHeaders(schedulerCookie, sessionCookie, step1Code, userData), agent: this._agent}
+      {
+        ...getStepTwoHeaders(
+          schedulerCookie,
+          sessionCookie,
+          step1Code,
+          userData
+        ),
+        agent: this._agent,
+      }
     );
     const code = this._parseHelper.parseStepCode(await response.text()) || '';
     this._step2Code = code;
@@ -129,12 +138,15 @@ export class EmbassyRequester {
     scrapLog.info('requesting 3 step');
     const step3 = await fetch(
       'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step2',
-      {...getStepThreeHeaders(
-        schedulerCookie,
-        sessionCookie,
-        step2Code,
-        service_ids
-      ),agent: this._agent}
+      {
+        ...getStepThreeHeaders(
+          schedulerCookie,
+          sessionCookie,
+          step2Code,
+          service_ids
+        ),
+        agent: this._agent,
+      }
     );
     this._step3Code = this._parseHelper.parseStepCode(await step3.text()) || '';
     this._stepNumber = RequesterStep.THREE;
@@ -148,10 +160,10 @@ export class EmbassyRequester {
       _cookies: { schedulerCookie, sessionCookie },
     } = this;
     const url = `https://pieraksts.mfa.gov.lv/ru/calendar/available-month-dates?year=${year}&month=${month}`;
-    const dates = await fetch(
-      url,
-      {...getDatesHeaders(schedulerCookie, sessionCookie), agent: this._agent}
-    );
+    const dates = await fetch(url, {
+      ...getDatesHeaders(schedulerCookie, sessionCookie),
+      agent: this._agent,
+    });
     const res = await dates.json();
     return res as string | string[];
   }
@@ -182,7 +194,7 @@ export class EmbassyRequester {
       schedulerCookie,
       sessionCookie,
     });
-    const res = await fetch(url, {...options, agent: this._agent});
+    const res = await fetch(url, { ...options, agent: this._agent });
     const times_complex = (await res.json()) as {
       service_ids: { id: number; long_name: string }[];
       times: string[];
@@ -213,7 +225,7 @@ export class EmbassyRequester {
       visit_date,
       visit_time,
     });
-    const res = await fetch(url, {...options, agent: this._agent});
+    const res = await fetch(url, { ...options, agent: this._agent });
     const text = await res.text();
     this._step4Code = this._parseHelper.parseStepCode(text) || '';
     this._stepNumber = RequesterStep.FOUR;
