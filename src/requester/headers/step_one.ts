@@ -1,4 +1,4 @@
-export const getStepOneHeaders: () => RequestInit = () => ({
+export const getStepOneHeaders = () => ({
   headers: {
     accept:
       'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -17,7 +17,7 @@ export const getStepOneHeaders: () => RequestInit = () => ({
   },
   referrer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step2',
   referrerPolicy: 'strict-origin-when-cross-origin',
-  body: null,
+  // body: null,
   method: 'GET',
   mode: 'cors',
   credentials: 'omit',

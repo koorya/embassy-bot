@@ -40,4 +40,4 @@ export const getStepTwoHeaders = (
       user.phone
     )}`,
     method: 'POST',
-  } as RequestInit);
+  } );

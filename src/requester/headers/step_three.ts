@@ -32,4 +32,4 @@ export const getStepThreeHeaders = (
       idParamName
     )}`,
     method: 'POST',
-  } as RequestInit);
+  } );
