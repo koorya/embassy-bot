@@ -1,24 +1,27 @@
+import { EventEmitter } from 'node:events';
+
 enum MonitorStates {
   available,
   unavailable,
 }
-export class Monitor {
+export class Monitor extends EventEmitter {
   private _state: MonitorStates = MonitorStates.unavailable;
-  private _on = () => {};
-  private _off = () => {};
 
-  constructor(on: () => void, off: () => void) {
-    this._on = on;
-    this._off = off;
-  }
   setAvailable() {
+    console.log('setAvailable');
     if (this._state == MonitorStates.available) return;
+
     this._state = MonitorStates.available;
-    this._on();
+
+    console.log('switchOn emit');
+    this.emit('switchOn');
   }
   setUnavailable() {
+    console.log('setUnavailable');
     if (this._state == MonitorStates.unavailable) return;
     this._state = MonitorStates.unavailable;
-    this._off();
+
+    console.log('switchOff emit');
+    this.emit('switchOff');
   }
 }

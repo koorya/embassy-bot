@@ -1,8 +1,11 @@
+import { ServiceIds } from '../EmbassyRequester';
+
+const idParamName = '&Persons%5B0%5D%5Bservice_ids%5D%5B%5D=';
 export const getStepThreeHeaders = (
   schedulerCookie: string,
   sessionCookie: string,
   htmlCode2: string,
-  service_ids: number
+  service_ids: ServiceIds[]
 ) =>
   ({
     headers: {
@@ -25,6 +28,8 @@ export const getStepThreeHeaders = (
       Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step2',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     },
-    body: `_csrf-mfa-scheduler=${htmlCode2}&Persons%5B0%5D%5Bservice_ids%5D%5B%5D=${service_ids}`,
+    body: `_csrf-mfa-scheduler=${htmlCode2}${idParamName}${service_ids.join(
+      idParamName
+    )}`,
     method: 'POST',
-  } as RequestInit);
+  } );

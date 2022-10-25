@@ -1,17 +1,15 @@
-export type UserParams = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-};
+import { ServiceIds } from '../EmbassyRequester';
 
-export const getStepTwoHeaders = (
-  schedulerCookie: string,
-  sessionCookie: string,
-  htmlCode: string,
-  user: UserParams
-) =>
-  ({
+export const getStepFourParams = (props: {
+  schedulerCookie: string;
+  sessionCookie: string;
+  step3Code: string;
+  visit_date: string;
+  serviceIds: ServiceIds[];
+  visit_time: string;
+}) => ({
+  url: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step3',
+  options: {
     headers: {
       accept:
         'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -28,10 +26,20 @@ export const getStepTwoHeaders = (
       'sec-fetch-site': 'same-origin',
       'sec-fetch-user': '?1',
       'upgrade-insecure-requests': '1',
-      cookie: `${schedulerCookie} ${sessionCookie}`,
-      Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/index',
+      cookie: `${props.schedulerCookie} ${props.sessionCookie}`,
+      Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step3',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     },
-    body: `branch_office_id=40&_csrf-mfa-scheduler=${htmlCode}&Persons%5B0%5D%5Bfirst_name%5D=${user.firstName}&Persons%5B0%5D%5Blast_name%5D=${user.lastName}&e_mail=${user.email}%40gmail.com&phone=%2B${user.phone}`,
+    body: `_csrf-mfa-scheduler=${
+      props.step3Code
+    }&ServiceGroups%5B0%5D%5Bvisit_date%5D=${
+      props.visit_date
+    }&ServiceGroups%5B0%5D%5Bservice_ids%5D%5B0%5D=${
+      props.serviceIds[0]
+    }&ServiceGroups%5B0%5D%5Bvisit_time%5D=${encodeURIComponent(
+      props.visit_time
+    )}`,
+    // body: formData,
     method: 'POST',
-  } as RequestInit);
+  },
+});

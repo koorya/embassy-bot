@@ -19,6 +19,6 @@ export const getDatesHeaders = (
     Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step3',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
   },
-  body: null,
+  body: undefined,
   method: 'GET',
 });

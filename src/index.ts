@@ -1,76 +1,44 @@
-import { fetchDates } from './fetchDates';
-import { botLog, scrapLog } from './loggers/logger';
-import { Telegraf } from 'telegraf';
-import { Monitor } from './Monitor';
-import { MongoClient } from 'mongodb';
-
-const MONGO_USER = process.env.MONGO_USER;
-const MONGO_PASSWORD = process.env.MONGO_PASSWORD;
-const MONGO_HOST = process.env.MONGO_HOST;
-const MONGO_PORT = process.env.MONGO_PORT;
+import { MessageController } from './db_controllers/MessageController';
+import { ChatIdController } from './db_controllers/ChatIdsController';
+import { BotWrapper } from './bot/BotWrapper';
+import { DBCreator } from './db_controllers/db';
+import { MonitorLogic } from './monitor_logic/MonitorLogic';
+import { UserController } from './db_controllers/UserController';
+import { Registrator } from './monitor_logic/Registrator';
+import { ProxyController } from './db_controllers/ProxyController';
 
 const main = async () => {
-  const uri = `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}`;
-  const client = new MongoClient(uri);
-  const db = client.db('botSubscribers');
-  const collection = db.collection('chatId');
-  // await collection.drop();
-  const chatIds: number[] = (await collection.find().toArray()).map(
-    ({ chatId }) => chatId
+  const ac = new AbortController();
+
+  const db = new DBCreator().create();
+
+  const chatIdController = new ChatIdController(db);
+  const messageController = new MessageController(db);
+  const userController = new UserController(db);
+  const proxyController = new ProxyController(db);
+  const registrator = new Registrator(
+    userController,
+    messageController,
+    proxyController
+  );
+  const bot = new BotWrapper(
+    chatIdController,
+    messageController,
+    userController,
+    proxyController
   );
 
-  const bot = new Telegraf(process.env.BOT_TOKEN || '');
+  bot.run(ac.signal);
 
-  bot.start(async (ctx) => {
-    botLog.info(`start on chat id: ${ctx.chat.id}`);
-    if (!chatIds.includes(ctx.chat.id)) {
-      chatIds.push(ctx.chat.id);
-      await collection.insertOne({
-        chatId: ctx.chat.id,
-        username: ctx.message.from.username,
-      });
-      ctx.reply(
-        'Добро пожаловать! Я сообщу вам о появлении доступных дат для получения визы.'
-      );
-    }
-  });
-
-  bot.launch();
-
-  const mon = new Monitor(
-    () =>
-      chatIds.forEach((id) =>
-        bot.telegram
-          .sendMessage(id, 'Появились доступные даты')
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
-      ),
-    () =>
-      chatIds.forEach((id) =>
-        bot.telegram
-          .sendMessage(id, 'Даты закончились')
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
-      )
+  const monitor = new MonitorLogic(
+    messageController,
+    userController,
+    registrator
   );
-
-  let timeout;
-  const cycle = async () => {
-    try {
-      if (await fetchDates()) {
-        mon.setAvailable();
-      } else {
-        mon.setUnavailable();
-      }
-      timeout = setTimeout(cycle, 1000 * 60);
-    } catch (e) {
-      scrapLog.error(e);
-      timeout = setTimeout(cycle, 0);
-    }
-  };
-
-  cycle();
+  monitor.run(ac.signal);
 
   // Enable graceful stop
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  process.once('SIGINT', () => ac.abort('SIGINT'));
+  process.once('SIGTERM', () => ac.abort('SIGTERM'));
 };
 main();
