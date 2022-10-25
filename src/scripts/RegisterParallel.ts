@@ -11,7 +11,7 @@ import { EmbassyRequester, ServiceIds } from '../requester/EmbassyRequester';
   const register =
     (idx: number) => async (resolve: () => void, reject: () => void) => {
       const captcha_helper = new CaptchaHelper(captchaKey);
-      const requester = new EmbassyRequester(data, captcha_helper);
+      const requester = new EmbassyRequester(data, null, captcha_helper);
       const step4 = await requester.requestUpToStepFour();
       while (!requester.isSuccessRegistration() && !ac.signal.aborted) {
         console.log(`${idx}: aborted: ${ac.signal.aborted}`);
