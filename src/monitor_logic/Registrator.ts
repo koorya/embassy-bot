@@ -30,8 +30,9 @@ export class Registrator {
     );
     Promise.allSettled(
       registrators.map((r) => {
-        // return r.registerUser(signal)
-        return r.registerUserFake(signal);
+        if (process.env.DEV_MODE) return r.registerUserFake(signal);
+
+        return r.registerUser(signal);
       })
     )
       .catch((r) => console.log(r))
