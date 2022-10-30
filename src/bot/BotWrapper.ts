@@ -143,7 +143,7 @@ export class BotWrapper {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
       botLog.info(
-        `Remove user command executed by ${this._chatIdController.getChatUserById(
+        `Remove user command executed by ${await this._chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; userId to remove - ${ctx.match[1]}`
       );
@@ -154,7 +154,7 @@ export class BotWrapper {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
       botLog.info(
-        `Remove poxy command executed by ${this._chatIdController.getChatUserById(
+        `Remove poxy command executed by ${await this._chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; host to remove - ${ctx.match[1]}`
       );
