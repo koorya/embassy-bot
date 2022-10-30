@@ -1,4 +1,6 @@
 import { Telegraf } from 'telegraf';
+import winston from 'winston';
+import { ChatIdController } from '../../db_controllers/ChatIdsController';
 import { UserController } from '../../db_controllers/UserController';
 
 export interface State {
@@ -9,6 +11,8 @@ export type StateDeps = {
   chatId: number;
   bot: Telegraf;
   userController: UserController;
+  chatIdController: ChatIdController;
+  logger: winston.Logger;
 };
 export class BaseState {
   protected _deps: StateDeps;

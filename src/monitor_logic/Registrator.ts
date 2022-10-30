@@ -22,10 +22,13 @@ export class Registrator {
   async registerAll(signal: AbortSignal) {
     console.log('Run registration');
     const proxyList = await this._proxyController.getProxies();
-    const not_registered = (
-      await this._userController.listNotRegistered()
-    ).slice(0, proxyList.length);
-    const registrators = not_registered.map((ud, idx) =>
+
+    const not_registered = await this._userController.listNotRegistered();
+    const users_to_register = not_registered.slice(0, proxyList.length);
+    console.log(`users not registered: ${not_registered.length}`);
+    console.log(`Proxies to register: ${proxyList.length}`);
+    console.log(`Users to register: ${users_to_register.length}`);
+    const registrators = users_to_register.map((ud, idx) =>
       this._embassyCreator.createEmbassyRegister(ud, proxyList[idx])
     );
     Promise.allSettled(
@@ -51,6 +54,7 @@ export class Registrator {
             );
 
             this._proxyController.markUsedByHost(proxy || '', phone);
+            console.log(`Registered with phone ${phone} by proxy ${proxy}`);
             const message = `Зарегистрирован ${firstName} ${lastName} на ${date} в ${time}. ${email}\n через ${proxy}`;
 
             this._messageController.addMessage(message);

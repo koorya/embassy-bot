@@ -18,7 +18,11 @@ export class ProxyController {
     this._proxyCollection = db.collection<ProxyWithHistory>('proxies');
   }
   async getProxies() {
-    return (await this._proxyCollection.find().toArray()).sort((a, b) => {
+    console.log('Proxy requested');
+    const proxies = await this._proxyCollection.find().toArray();
+    console.log(`proxy count: ${proxies.length}`);
+
+    return proxies.sort((a, b) => {
       if (!a.history.length) return -1;
       if (!b.history.length) return 1;
 
@@ -29,12 +33,14 @@ export class ProxyController {
     });
   }
   async addProxy(creds: ProxyCreds) {
+    console.log(`Proxy will created: ${creds.host}`);
     await this._proxyCollection.insertOne({
       ...creds,
       history: [],
     });
   }
   async removeProxyByHost(host: ProxyCreds['host']) {
+    console.log(`Proxy will removed by host: ${host}`);
     await this._proxyCollection.deleteOne({ host });
   }
 

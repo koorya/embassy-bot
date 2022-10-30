@@ -120,7 +120,13 @@ export class EnterPhone extends AddUserBase implements State {
       this._userData.phone = text as UserData['phone'];
       await this._deps.userController.addUser(this._userData as UserData);
       const { firstName, lastName, phone } = this.userData;
-
+      this._deps.logger.info(
+        `Add user with phone ${
+          this._userData.phone
+        } by ${this._deps.chatIdController.getChatUserById(
+          this._deps.chatId
+        )}:${this._deps.chatId}`
+      );
       await this._deps.bot.telegram.sendMessage(
         this._deps.chatId,
 

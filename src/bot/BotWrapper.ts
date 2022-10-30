@@ -62,7 +62,13 @@ export class BotWrapper {
       currentState.set(
         ctx.chat.id,
         new EnterServiceId(
-          { chatId: ctx.chat.id, bot, userController: this._userController },
+          {
+            chatId: ctx.chat.id,
+            bot,
+            userController: this._userController,
+            chatIdController: this._chatIdController,
+            logger: botLog,
+          },
           {}
         )
       );
@@ -83,7 +89,7 @@ export class BotWrapper {
       }
     );
     bot.hears(/\/list_proxy/, async (ctx) => {
-      (await this._proxyController.getProxies()).map((p) => {
+      const cnt = (await this._proxyController.getProxies()).map((p) => {
         const used = p.history.length;
         const when = p.history.pop()?.date.toLocaleDateString();
         ctx.sendMessage(
@@ -92,13 +98,14 @@ export class BotWrapper {
             Markup.button.callback('Удалить', `remove-proxy-${p.host}`),
           ])
         );
-      });
+        return null;
+      }).length;
+      if (cnt == 0) ctx.sendMessage('В базе нет ниодного прокси');
       console.log(ctx.match);
     });
 
     bot.hears(/\/list_((?:reg)|(?:notreg)|(?:all))/, async (ctx) => {
       const cmd = ctx.match[1] as 'reg' | 'notreg';
-      await ctx.reply('Пользователи в базе');
       const users =
         cmd == 'reg'
           ? await this._userController.listRegistered()
@@ -107,7 +114,7 @@ export class BotWrapper {
           : cmd == 'all'
           ? await this._userController.listAll()
           : [];
-      users.map(
+      const cnt = users.map(
         ({
           _id,
           email,
@@ -127,19 +134,33 @@ export class BotWrapper {
               Markup.button.callback('Удалить', `remove-user-${_id}`),
             ])
           )
-      );
+      ).length;
+      if (cnt == 0) {
+        await ctx.reply('Таких пользователей в базе нет');
+      }
     });
     bot.action(/remove-user-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
+      botLog.info(
+        `Remove user command executed by ${this._chatIdController.getChatUserById(
+          ctx.chat.id
+        )}:${ctx.chat.id}; userId to remove - ${ctx.match[1]}`
+      );
       ctx.answerCbQuery();
       this._userController.removeUser({ _id: new ObjectId(ctx.match[1]) });
     });
     bot.action(/remove-proxy-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
+      botLog.info(
+        `Remove poxy command executed by ${this._chatIdController.getChatUserById(
+          ctx.chat.id
+        )}:${ctx.chat.id}; host to remove - ${ctx.match[1]}`
+      );
       await this._proxyController.removeProxyByHost(ctx.match[1]);
       ctx.answerCbQuery('Удален');
+      this._messageController.addMessage(`Удален прокси ${ctx.match[1]}`);
     });
     bot.on('text', async (ctx) => {
       const new_state = await currentState
