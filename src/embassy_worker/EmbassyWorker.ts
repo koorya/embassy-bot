@@ -1,4 +1,6 @@
+import winston, { createLogger, format, transports } from 'winston';
 import { ProxyCreds } from '../db_controllers/ProxyController';
+import { scrapLog } from '../loggers/logger';
 import { CaptchaHelper } from '../requester/CaptchaHelper';
 import {
   EmbassyRequester,
@@ -43,18 +45,21 @@ export class EmbassyRegister {
       ac.abort();
     };
     signal.addEventListener('abort', onAbort, { once: true });
+    const timestamp = Date.now();
     const register =
-      (idx: number) =>
+      (idx: number, logger: winston.Logger) =>
       async (resolve: (res: ResType) => void, reject: () => void) => {
         const captcha_helper = new CaptchaHelper(captchaKey);
         const requester = new EmbassyRequester(
           this._userData,
           this._proxy,
+          logger,
           captcha_helper
         );
         const step4 = await requester.requestUpToStepFour();
         while (!requester.isSuccessRegistration() && !ac.signal.aborted) {
-          console.log(await step4.requestStepFive(ac.signal));
+          const res = await step4.requestStepFive(ac.signal);
+          logger.info(`registerUser.register.requestStepFive: ${res}`);
         }
         const result = requester.isSuccessRegistration();
         if (result.success) resolve(result.info);
@@ -62,10 +67,19 @@ export class EmbassyRegister {
       };
     const workers = Array.from(Array(n)).map(() => register);
     const result = await Promise.race(
-      workers.map((w, idx) => new Promise<ResType>(w(idx)))
+      workers.map(
+        (w, idx) =>
+          new Promise<ResType>(
+            w(
+              idx,
+              scrapLog.child({
+                variant: `regworker_${timestamp}_${idx + 1}_of_${n}`,
+              })
+            )
+          )
+      )
     ).catch((r) => {});
     ac.abort();
-    console.log(new Date());
 
     signal.removeEventListener('abort', onAbort);
     return result;
@@ -99,7 +113,8 @@ export class EmbassyWorkerCreator {
         phone: process.env.DEFAULT_PHONE,
         serviceIds: [ServiceIds.WORKER],
       } as UserData,
-      null
+      null,
+      scrapLog.child({ variant: 'monitor' })
     );
     return new EmbassyChecker(requester);
   }

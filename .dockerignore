@@ -4,3 +4,6 @@ logs
 build
 .vscode
 mongo
+src/scripts
+untracked
+

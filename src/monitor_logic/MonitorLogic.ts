@@ -1,5 +1,5 @@
+import winston from 'winston';
 import { MessageController } from '../db_controllers/MessageController';
-import { UserController } from '../db_controllers/UserController';
 import { EmbassyWorkerCreator, ResType } from '../embassy_worker/EmbassyWorker';
 import { scrapLog } from '../loggers/logger';
 import { Monitor } from './Monitor';
@@ -8,10 +8,13 @@ import { Registrator } from './Registrator';
 export class MonitorLogic {
   private _messageController: MessageController;
   private _registrator: Registrator;
+  private _logger: winston.Logger;
 
   constructor(messageController: MessageController, registrator: Registrator) {
     this._messageController = messageController;
     this._registrator = registrator;
+
+    this._logger = scrapLog.child({ service: 'MonitorLogic' });
   }
 
   async run(signal: AbortSignal) {
@@ -29,7 +32,7 @@ export class MonitorLogic {
         this._registrator.registerAll(ac.signal);
       })
       .on('switchOff', () => {
-        console.log('Stop registration');
+        this._logger.info('Stop registration');
         ac.abort();
       })
       .on('switchOff', () => {
@@ -54,7 +57,7 @@ export class MonitorLogic {
           1000 * parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')
         );
       } catch (e) {
-        scrapLog.error(e);
+        this._logger.error(e);
         timeout = setTimeout(cycleMonitor, 0);
       }
     };

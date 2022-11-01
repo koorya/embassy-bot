@@ -2,7 +2,6 @@ import { getStepThreeHeaders } from './headers/step_three';
 import { getStepOneHeaders } from './headers/step_one';
 import { getStepTwoHeaders } from './headers/step_two';
 import { getDatesHeaders } from './headers/getDatesHeaders';
-import { scrapLog } from '../loggers/logger';
 import { ParseHelper } from './ParseHelper';
 import { CaptchaHelper } from './CaptchaHelper';
 import { getStepFiveParams } from './headers/step_five';
@@ -12,6 +11,7 @@ import { ResType } from '../embassy_worker/EmbassyWorker';
 import { ProxyCreds } from '../db_controllers/ProxyController';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
+import winston from 'winston';
 type Cookies = {
   sessionCookie: string;
   schedulerCookie: string;
@@ -56,10 +56,12 @@ export class EmbassyRequester {
   private _date?: { date: string; time: string };
   private _proxy: ProxyCreds | null;
   private _agent?: HttpsProxyAgent;
+  private _logger: winston.Logger;
 
   constructor(
     userData: UserData,
     proxy: ProxyCreds | null,
+    logger: winston.Logger,
     captchaHelper?: CaptchaHelper
   ) {
     this._userData = userData;
@@ -71,6 +73,7 @@ export class EmbassyRequester {
           `http://${this._proxy.user}:${this._proxy.pass}@${this._proxy.host}:${this._proxy.port}`
         )
       : undefined;
+    this._logger = logger.child({ service: 'EmbassyRequester' });
   }
 
   private async _step1() {
@@ -80,7 +83,7 @@ export class EmbassyRequester {
       { ...getStepOneHeaders(), agent: this._agent }
     );
 
-    scrapLog.info('requesting 1 step');
+    this._logger.info('requesting 1 step');
     const cookies = this._parseHelper.parseCookie(
       response.headers.get('set-cookie') || ''
     );
@@ -104,7 +107,7 @@ export class EmbassyRequester {
       _step1Code: step1Code,
     } = this;
 
-    scrapLog.info('requesting 2 step');
+    this._logger.info('requesting 2 step');
     const response = await fetch(
       'https://pieraksts.mfa.gov.lv/ru/uzbekistan/index',
       {
@@ -135,7 +138,7 @@ export class EmbassyRequester {
       _step2Code: step2Code,
     } = this;
 
-    scrapLog.info('requesting 3 step');
+    this._logger.info('requesting 3 step');
     const step3 = await fetch(
       'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step2',
       {
@@ -163,15 +166,30 @@ export class EmbassyRequester {
     const dates = await fetch(url, {
       ...getDatesHeaders(schedulerCookie, sessionCookie),
       agent: this._agent,
+    }).catch((e) => {
+      this._logger.error(e);
     });
+    if (!dates) return null;
     const res = await dates.json();
     return res as string | string[];
   }
   private async _checkDatesByYearMonth(year: number, month: number) {
     const res = await this._availableMonthDatesRequest(year, month);
-    if (res != 'Šobrīd visi pieejamie laiki ir aizņemti') {
-      scrapLog.info(`Found available-month-dates`);
-      return true;
+    if (res?.length) {
+      if (res != 'Šobrīd visi pieejamie laiki ir aizņemti') {
+        this._logger.info(
+          `Found available-month-dates (year:${year}, month:${month}): ${JSON.stringify(
+            res
+          )}`
+        );
+        return true;
+      }
+    } else {
+      this._logger.info(
+        `Unrecognized response (year:${year}, month:${month}): ${JSON.stringify(
+          res
+        )}`
+      );
     }
     return false;
   }
@@ -199,8 +217,14 @@ export class EmbassyRequester {
       service_ids: { id: number; long_name: string }[];
       times: string[];
     }[];
-    const time = times_complex.pop()?.times;
-    return time?.map((t) => ({ date, time: t }));
+    this._logger.info('_availableTimeRequest: ', JSON.stringify(times_complex));
+    try {
+      const time = times_complex?.pop()?.times;
+      return time?.map((t) => ({ date, time: t }));
+    } catch (e) {
+      this._logger.error('catched :', e);
+    }
+    return [];
   }
 
   private async _requestStepFour(visit_date: string, visit_time: string) {
@@ -227,6 +251,7 @@ export class EmbassyRequester {
     });
     const res = await fetch(url, { ...options, agent: this._agent });
     const text = await res.text();
+    this._logger.info(`STEP FOUR TEXT: ${text}`);
     this._step4Code = this._parseHelper.parseStepCode(text) || '';
     this._stepNumber = RequesterStep.FOUR;
     return this;
@@ -252,6 +277,7 @@ export class EmbassyRequester {
     let isAborted = false;
     const onAbort = () => {
       isAborted = true;
+      this._logger.info('aborted');
     };
     signal.addEventListener('abort', onAbort, { once: true });
     const reCaptcha =
@@ -277,6 +303,7 @@ export class EmbassyRequester {
 
     const text = await res.text();
 
+    this._logger.info('STEP FIVE TEXT: ', text);
     if (isAborted) return;
     const code = this._parseHelper.parseStepCode(text);
     if (code) {
@@ -284,7 +311,7 @@ export class EmbassyRequester {
       this._captchaHelper.reportBad();
     } else {
       this._captchaHelper.reportGood();
-      console.log(text);
+      this._logger.info(text);
 
       this._stepNumber = RequesterStep.FIVE;
     }
@@ -318,7 +345,7 @@ export class EmbassyRequester {
   }
 
   private async _getDates() {
-    scrapLog.info('requesting dates');
+    this._logger.info('requesting dates');
     const nextYearDate = new Date().setFullYear(new Date().getFullYear() + 1);
     const availableDates: string[] = [];
     for (
@@ -335,6 +362,7 @@ export class EmbassyRequester {
   }
   private async _checkDates() {
     const date = new Date();
+    this._logger.info(date);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     return await this._checkDatesByYearMonth(year, month);
@@ -353,7 +381,7 @@ export class EmbassyRequester {
     const date_with_times = await Promise.all(
       dates.map((date) => step3._availableTimeRequest(date))
     );
-    console.log(date_with_times);
+    this._logger.info(`getDateWithTimes: ${JSON.stringify(date_with_times)}`);
     return date_with_times.flat().filter((item) => !!item);
   }
   async requestUpToStepFour() {
@@ -363,7 +391,9 @@ export class EmbassyRequester {
     if (!selectedTime) throw Error('Not found Dates');
 
     this._date = selectedTime;
-    console.log(selectedTime.date, selectedTime.time);
+    this._logger.info(
+      `requestUpToStepFour select random date: ${selectedTime.date}, ${selectedTime.time}`
+    );
     return await this._requestStepFour(selectedTime.date, selectedTime.time);
   }
   async requestStepFive(signal: AbortSignal = new AbortController().signal) {

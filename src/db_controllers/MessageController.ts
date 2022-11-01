@@ -1,11 +1,15 @@
 import { Collection, Db } from 'mongodb';
+import winston from 'winston';
+import { scrapLog } from '../loggers/logger';
 
 export type MessType = { message: string; recipients: number[] };
 
 export class MessageController {
   private _messageCollection: Collection<MessType>;
+  private _logger: winston.Logger;
   constructor(db: Db) {
     this._messageCollection = db.collection<MessType>('messages');
+    this._logger = scrapLog.child({ service: 'MessageController' });
   }
   async setAsSended(mess: MessType, id: number) {
     await this._messageCollection.updateOne(mess, {
@@ -37,7 +41,7 @@ export class MessageController {
         message: text,
       })
       .then((r) => {
-        console.log('message added');
+        this._logger.info(`message added ${text}`);
       });
   }
 }

@@ -1,8 +1,14 @@
+import { Logger } from 'winston';
+import { scrapLog } from '../loggers/logger';
+
 export class CaptchaHelper {
   private _api_key: string;
   private _id?: string;
+  private _logger: Logger;
   constructor(api_key: string) {
     this._api_key = api_key;
+
+    this._logger = scrapLog.child({ service: 'CaptchaHelper' });
   }
   async getRecaptcha(
     props: {
@@ -21,37 +27,41 @@ export class CaptchaHelper {
     const id_match = /^OK\|(\d*)$/.exec(await res.text());
     if (!id_match) return;
     this._id = id_match[1];
-    console.log(this._id);
+    this._logger.info(this._id);
+    try {
+      const reCaptcha = await new Promise<string>(async (resolve, reject) => {
+        const onAbort = () => {
+          clearTimeout(timeout);
+          reject('Aborted');
+        };
+        const getRes = async () => {
+          signal.addEventListener('abort', onAbort, { once: true });
+          if (signal.aborted) return '';
+          const res = await fetch(
+            `https://2captcha.com/res.php?key=${api_key}&action=get&id=${this._id}`,
+            { signal }
+          );
+          const text = await res.text();
 
-    const reCaptcha = await new Promise<string>(async (resolve, reject) => {
-      const onAbort = () => {
-        clearTimeout(timeout);
-        reject('Aborted');
-      };
-      const getRes = async () => {
-        signal.addEventListener('abort', onAbort, { once: true });
-        if (signal.aborted) return '';
-        const res = await fetch(
-          `https://2captcha.com/res.php?key=${api_key}&action=get&id=${this._id}`,
-          { signal }
-        );
-        const text = await res.text();
-
-        const captcha_match = /^OK\|(.*)$/.exec(text);
-        if (captcha_match) {
-          resolve(captcha_match[1]);
-        } else if (text === 'CAPCHA_NOT_READY') {
-          console.log(text);
-          timeout = setTimeout(getRes, 5000);
-        } else {
-          console.log(text);
-          reject(text);
-        }
-        signal.removeEventListener('abort', onAbort);
-      };
-      let timeout = setTimeout(getRes, 5000);
-    }).catch((r) => console.log(r));
-    return reCaptcha || '';
+          const captcha_match = /^OK\|(.*)$/.exec(text);
+          if (captcha_match) {
+            resolve(captcha_match[1]);
+          } else if (text === 'CAPCHA_NOT_READY') {
+            this._logger.info(text);
+            timeout = setTimeout(getRes, 5000);
+          } else {
+            this._logger.info(text);
+            reject(text);
+          }
+          signal.removeEventListener('abort', onAbort);
+        };
+        let timeout = setTimeout(getRes, 5000);
+      });
+      return reCaptcha || '';
+    } catch (r) {
+      this._logger.error(r);
+    }
+    return '';
   }
   async verify(props: { response: string; secret: string }) {
     const { response, secret } = props;
@@ -68,7 +78,7 @@ export class CaptchaHelper {
         `http://2captcha.com/res.php?key=${this._api_key}&action=reportgood&id=${this._id}`
       )
         .then((r) => r.text())
-        .then((r) => console.log(`good ${id}: ${r}`));
+        .then((r) => this._logger.info(`good ${id}: ${r}`));
   }
   async reportBad() {
     const id = this._id;
@@ -77,6 +87,6 @@ export class CaptchaHelper {
         `http://2captcha.com/res.php?key=${this._api_key}&action=reportbad&id=${this._id}`
       )
         .then((r) => r.text())
-        .then((r) => console.log(`bad ${id}: ${r}`));
+        .then((r) => this._logger.info(`bad ${id}: ${r}`));
   }
 }

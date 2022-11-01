@@ -1,11 +1,12 @@
 import { Markup } from 'telegraf';
+import { botLog } from '../../loggers/logger';
 import { ServiceIds, UserData } from '../../requester/EmbassyRequester';
 import { BaseState, State, Idle, StateDeps } from './States';
 
 export class AddUserBase extends BaseState {
   protected _userData: Partial<UserData>;
   constructor(deps: StateDeps, userData: Partial<UserData>) {
-    super(deps);
+    super({ ...deps, logger: deps.logger.child({ bot_action: 'AddUser' }) });
     this._userData = userData;
   }
   get userData() {
@@ -46,7 +47,7 @@ export class EnterServiceId extends AddUserBase implements State {
   }
 
   hanlde(text: string): State {
-    console.log(text);
+    this._deps.logger.info(`EnterServiceId: ${text}`);
     if (text != 'text')
       return new EnterFirstName(this._deps, {
         serviceIds: [parseInt(text) as any as ServiceIds],

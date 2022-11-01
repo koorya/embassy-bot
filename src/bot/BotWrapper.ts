@@ -85,7 +85,7 @@ export class BotWrapper {
           port: ctx.match[4],
         });
         ctx.reply('Прокси добавлен');
-        console.log(ctx.match);
+        botLog.info(`Прокси добавлен: ${ctx.match}`);
       }
     );
     bot.hears(/\/list_proxy/, async (ctx) => {
@@ -101,7 +101,7 @@ export class BotWrapper {
         return null;
       }).length;
       if (cnt == 0) ctx.sendMessage('В базе нет ниодного прокси');
-      console.log(ctx.match);
+      botLog.info(ctx.match);
     });
 
     bot.hears(/\/list_((?:reg)|(?:notreg)|(?:all))/, async (ctx) => {

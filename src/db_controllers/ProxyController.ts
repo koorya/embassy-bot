@@ -1,4 +1,6 @@
 import { Collection, Db, ObjectId } from 'mongodb';
+import winston from 'winston';
+import { scrapLog } from '../loggers/logger';
 import { UserData } from '../requester/EmbassyRequester';
 
 export type ProxyCreds = {
@@ -13,14 +15,17 @@ export type ProxyWithHistory = ProxyCreds & {
 
 export class ProxyController {
   private _proxyCollection: Collection<ProxyWithHistory>;
+  private _logger: winston.Logger;
 
   constructor(db: Db) {
     this._proxyCollection = db.collection<ProxyWithHistory>('proxies');
+
+    this._logger = scrapLog.child({ service: 'ProxyController' });
   }
   async getProxies() {
-    console.log('Proxy requested');
+    this._logger.info('Proxy requested');
     const proxies = await this._proxyCollection.find().toArray();
-    console.log(`proxy count: ${proxies.length}`);
+    this._logger.info(`proxy count: ${proxies.length}`);
 
     return proxies.sort((a, b) => {
       if (!a.history.length) return -1;
@@ -33,14 +38,14 @@ export class ProxyController {
     });
   }
   async addProxy(creds: ProxyCreds) {
-    console.log(`Proxy will created: ${creds.host}`);
+    this._logger.info(`Proxy will created: ${creds.host}`);
     await this._proxyCollection.insertOne({
       ...creds,
       history: [],
     });
   }
   async removeProxyByHost(host: ProxyCreds['host']) {
-    console.log(`Proxy will removed by host: ${host}`);
+    this._logger.info(`Proxy will removed by host: ${host}`);
     await this._proxyCollection.deleteOne({ host });
   }
 
