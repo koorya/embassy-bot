@@ -175,7 +175,7 @@ export class EmbassyRequester {
   }
   private async _checkDatesByYearMonth(year: number, month: number) {
     const res = await this._availableMonthDatesRequest(year, month);
-    if (res?.length) {
+    if (res?.hasOwnProperty('length')) {
       if (res != 'Šobrīd visi pieejamie laiki ir aizņemti') {
         this._logger.info(
           `Found available-month-dates (year:${year}, month:${month}): ${JSON.stringify(
@@ -183,6 +183,10 @@ export class EmbassyRequester {
           )}`
         );
         return true;
+      } else {
+        this._logger.info(
+          `year:${year}, month:${month} - ${JSON.stringify(res)}`
+        );
       }
     } else {
       this._logger.info(
