@@ -17,5 +17,6 @@
     // "editor.insertSpaces": true,
     // "editor.tabSize": 2,
     // "editor.autoIndent": "advanced"
-  }
+  },
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true
 }
