@@ -2,7 +2,7 @@ import { Markup, Telegraf } from 'telegraf';
 import { ChatIdController } from '../db_controllers/ChatIdsController';
 import { MessageController } from '../db_controllers/MessageController';
 import { botLog, scrapLog } from '../loggers/logger';
-import { UserData } from '../requester/EmbassyRequester';
+import { ServiceIds, UserData } from '../requester/EmbassyRequester';
 import { State } from './DialogController/States';
 import { EnterFirstName, EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
@@ -120,14 +120,18 @@ export class BotWrapper {
           email,
           firstName,
           lastName,
-          notes,
+
           phone,
-          serviceIds,
+
           ...ext
         }) =>
           ctx.telegram.sendMessage(
             ctx.chat.id,
-            `${firstName} ${lastName} ${phone} ${email} ${notes} ${serviceIds} ${
+            `${firstName} ${lastName} ${phone} ${email} ${
+              ext.serviceId == ServiceIds.WORKER
+                ? ext.addFieldOne + ext.addFieldTwo + ext.addFieldThree
+                : ''
+            } ${ext.serviceId} ${
               ext.isRegistered ? 'зарегистрирован на ' + ext.date : 'в очереди'
             }`,
             Markup.inlineKeyboard([

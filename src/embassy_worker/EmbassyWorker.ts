@@ -6,6 +6,7 @@ import {
   EmbassyRequester,
   ServiceIds,
   UserData,
+  UserDataBase,
 } from '../requester/EmbassyRequester';
 
 export type ResType = {
@@ -109,9 +110,8 @@ export class EmbassyWorkerCreator {
         email: process.env.DEFAULT_EMAIL,
         firstName: process.env.DEFAULT_FIRSTNAME,
         lastName: process.env.DEFAULT_LASTNAME,
-        notes: process.env.DEFAULT_NOTES,
         phone: process.env.DEFAULT_PHONE,
-        serviceIds: [ServiceIds.WORKER],
+        serviceId: ServiceIds.WORKER,
       } as UserData,
       null,
       scrapLog.child({ variant: 'monitor' })

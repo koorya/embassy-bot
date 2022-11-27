@@ -29,16 +29,26 @@ export enum ServiceIds {
   WORKER = '227', // Оформление латвийской рабочей визы для граждан Узбекистана
 }
 
-export type UserData = {
-  phone: `+998${number}`; // +998 + 9 digits
+export type UserDataBase = {
+  phone: string; // +998 + 9 digits
   firstName: string;
   lastName: string;
-  email: `${string}@${string}`;
-  serviceIds: ServiceIds[];
-  addFieldOne: string;
-  addFieldTwo: string;
-  addFieldThree: string;
+  email: string;
+
+  serviceId: ServiceIds;
 };
+export type UserData = Omit<UserDataBase, 'serviceId'> &
+  (
+    | {
+        serviceId: ServiceIds.WORKER;
+        addFieldOne: string;
+        addFieldTwo: string;
+        addFieldThree: string;
+      }
+    | {
+        serviceId: Exclude<ServiceIds, ServiceIds.WORKER>;
+      }
+  );
 
 enum RequesterStep {
   IDLE,
@@ -131,7 +141,7 @@ export class EmbassyRequester {
     this._stepNumber = RequesterStep.TWO;
     return this;
   }
-  private async _step3(service_ids: ServiceIds[]) {
+  private async _step3(service_id: ServiceIds) {
     if (
       this._stepNumber != RequesterStep.TWO ||
       !this._cookies ||
@@ -152,7 +162,7 @@ export class EmbassyRequester {
           schedulerCookie,
           sessionCookie,
           step2Code,
-          service_ids
+          service_id
         ),
         agent: this._agent,
       }
@@ -245,7 +255,7 @@ export class EmbassyRequester {
     )
       throw Error('Invalid step');
     const {
-      _userData: { serviceIds },
+      _userData: { serviceId },
       _step3Code: step3Code,
 
       _cookies: { schedulerCookie, sessionCookie },
@@ -253,7 +263,7 @@ export class EmbassyRequester {
 
     const { url, options } = getStepFourParams({
       schedulerCookie,
-      serviceIds,
+      serviceId,
       sessionCookie,
       step3Code,
       visit_date,
@@ -281,7 +291,7 @@ export class EmbassyRequester {
     )
       throw Error('Invalid step');
     const {
-      _userData: { serviceIds },
+      _userData: { serviceId },
       _step4Code: step4Code,
 
       _cookies: { schedulerCookie, sessionCookie },
@@ -348,11 +358,11 @@ export class EmbassyRequester {
   }
   async toStep3() {
     const userData = this._userData;
-    const { serviceIds } = userData;
+    const { serviceId } = userData;
 
     const step3 = await this._step1()
       .then((r) => r._step2(userData))
-      .then((r) => r._step3(serviceIds));
+      .then((r) => r._step3(serviceId));
     return step3;
   }
 
@@ -409,15 +419,16 @@ export class EmbassyRequester {
     return await this._requestStepFour(selectedTime.date, selectedTime.time);
   }
   async requestStepFive(signal: AbortSignal = new AbortController().signal) {
-    if (this._userData.serviceIds[0] == ServiceIds.SHENGEN_SW_EST)
+    const _userData = this._userData;
+    if (_userData.serviceId == ServiceIds.SHENGEN_SW_EST)
       return await this._requestStepFive(getStepFiveParamsShengen(), signal);
-    if (this._userData.serviceIds[0] == ServiceIds.WORKER)
+    if (_userData.serviceId == ServiceIds.WORKER)
       return await this._requestStepFive(
-        getStepFiveParamsWorker(this._userData),
+        getStepFiveParamsWorker(_userData),
         signal
       );
     this._logger.error(
-      `ServiceId is not implemented: ${this._userData.serviceIds[0]}`
+      `ServiceId is not implemented: ${this._userData.serviceId}`
     );
     throw Error('ServiceId is not implemented');
   }

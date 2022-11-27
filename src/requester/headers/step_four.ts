@@ -5,7 +5,7 @@ export const getStepFourParams = (props: {
   sessionCookie: string;
   step3Code: string;
   visit_date: string;
-  serviceIds: ServiceIds[];
+  serviceId: ServiceIds;
   visit_time: string;
 }) => ({
   url: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step3',
@@ -35,7 +35,7 @@ export const getStepFourParams = (props: {
     }&ServiceGroups%5B0%5D%5Bvisit_date%5D=${
       props.visit_date
     }&ServiceGroups%5B0%5D%5Bservice_ids%5D%5B0%5D=${
-      props.serviceIds[0]
+      props.serviceId
     }&ServiceGroups%5B0%5D%5Bvisit_time%5D=${encodeURIComponent(
       props.visit_time
     )}`,

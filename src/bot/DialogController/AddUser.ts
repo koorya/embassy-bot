@@ -49,7 +49,7 @@ export class EnterServiceId extends AddUserBase implements State {
     this._deps.logger.info(`EnterServiceId: ${text}`);
     if (text != 'text')
       return new EnterFirstName(this._deps, {
-        serviceIds: [parseInt(text) as any as ServiceIds],
+        serviceId: parseInt(text) as any as ServiceIds,
       });
     return this;
   }
@@ -74,14 +74,12 @@ export class EnterLastName extends AddUserBase implements State {
   }
   hanlde(text: string): State {
     if (text != 'text') {
-      if (this._userData?.serviceIds?.includes(ServiceIds.WORKER)) {
+      if (this._userData?.serviceId == ServiceIds.WORKER) {
         return new EnterAddFieldOne(this._deps, {
           ...this._userData,
           lastName: text,
         });
-      } else if (
-        this._userData?.serviceIds?.includes(ServiceIds.SHENGEN_SW_EST)
-      ) {
+      } else if (this._userData?.serviceId == ServiceIds.SHENGEN_SW_EST) {
         return new EnterEmail(this._deps, {
           ...this._userData,
           lastName: text,
@@ -104,7 +102,8 @@ export class EnterAddFieldOne extends AddUserBase implements State {
     if (text != 'text')
       return new EnterAddFieldTwo(this._deps, {
         ...this._userData,
-        addFieldOne: text as UserData['addFieldOne'],
+        serviceId: ServiceIds.WORKER,
+        addFieldOne: text,
       });
     return this;
   }
@@ -121,7 +120,9 @@ export class EnterAddFieldTwo extends AddUserBase implements State {
     if (text != 'text')
       return new EnterAddFieldThree(this._deps, {
         ...this._userData,
-        addFieldTwo: text as UserData['addFieldTwo'],
+
+        serviceId: ServiceIds.WORKER,
+        addFieldTwo: text,
       });
     return this;
   }
@@ -138,7 +139,9 @@ export class EnterAddFieldThree extends AddUserBase implements State {
     if (text != 'text')
       return new EnterEmail(this._deps, {
         ...this._userData,
-        addFieldThree: text as UserData['addFieldThree'],
+
+        serviceId: ServiceIds.WORKER,
+        addFieldThree: text,
       });
     return this;
   }

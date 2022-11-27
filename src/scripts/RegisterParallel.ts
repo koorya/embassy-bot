@@ -5,7 +5,6 @@ import { EmbassyRequester, ServiceIds } from '../requester/EmbassyRequester';
 (async () => {
   const n = 20;
   const data = userData();
-  data.serviceIds = [ServiceIds.STUDENT];
   const captchaKey = process.env.TWO_CAPTCHA_KEY || '';
   const ac = new AbortController();
 
@@ -13,7 +12,7 @@ import { EmbassyRequester, ServiceIds } from '../requester/EmbassyRequester';
     (idx: number) => async (resolve: () => void, reject: () => void) => {
       const captcha_helper = new CaptchaHelper(captchaKey);
       const requester = new EmbassyRequester(
-        data,
+        { ...data, serviceId: ServiceIds.SHENGEN_SW_EST },
         null,
         createLogger({ transports: [transports.Console] }),
         captcha_helper
