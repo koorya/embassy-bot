@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node -r dotenv/config build/index.js",
-    "build": "npx tsc",
+    "build": "npx tsc --project tsconfig.build.json",
     "dev": "nodemon --exec ts-node -r dotenv/config src/index.ts",
     "solvecaptcha": "ts-node -r dotenv/config src/scripts/SolveCaptcha.ts",
     "register": "ts-node -r dotenv/config src/scripts/Register.ts",
