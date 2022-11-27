@@ -2,12 +2,11 @@ import { Markup, Telegraf } from 'telegraf';
 import { ChatIdController } from '../db_controllers/ChatIdsController';
 import { MessageController } from '../db_controllers/MessageController';
 import { botLog, scrapLog } from '../loggers/logger';
-import { ServiceIds, UserData } from '../requester/EmbassyRequester';
+import { ServiceIds } from '../requester/EmbassyRequester';
 import { State } from './DialogController/States';
-import { EnterFirstName, EnterServiceId } from './DialogController/AddUser';
+import { EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
 import { ObjectId } from 'mongodb';
-import { Registrator } from '../monitor_logic/Registrator';
 import { ProxyController } from '../db_controllers/ProxyController';
 
 export class BotWrapper {
@@ -115,21 +114,12 @@ export class BotWrapper {
           ? await this._userController.listAll()
           : [];
       const cnt = users.map(
-        ({
-          _id,
-          email,
-          firstName,
-          lastName,
-
-          phone,
-
-          ...ext
-        }) =>
+        ({ _id, email, firstName, lastName, phone, ...ext }) =>
           ctx.telegram.sendMessage(
             ctx.chat.id,
             `${firstName} ${lastName} ${phone} ${email} ${
               ext.serviceId == ServiceIds.WORKER
-                ? ext.addFieldOne + ext.addFieldTwo + ext.addFieldThree
+                ? `${ext.addFieldOne} + ${ext.addFieldTwo} + ${ext.addFieldThree}`
                 : ''
             } ${ext.serviceId} ${
               ext.isRegistered ? 'зарегистрирован на ' + ext.date : 'в очереди'
