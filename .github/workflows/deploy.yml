@@ -15,7 +15,7 @@ jobs:
     - name: rsync deployments
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzr --delete --exclude=.env
+        switches: -avzr --delete --exclude=.env --exclude=mongo --exclude=logs
         path: .
         remote_path: /home/kirill/embassy-bot
         remote_host: 35.214.44.47
