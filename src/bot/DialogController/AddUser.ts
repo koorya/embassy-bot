@@ -1,5 +1,4 @@
 import { Markup } from 'telegraf';
-import { botLog } from '../../loggers/logger';
 import { ServiceIds, UserData } from '../../requester/EmbassyRequester';
 import { BaseState, State, Idle, StateDeps } from './States';
 
@@ -24,18 +23,18 @@ export class EnterServiceId extends AddUserBase implements State {
             'SW/EST SHENGEN',
             `register-user-serviceid-${ServiceIds.SHENGEN_SW_EST}`
           ),
-          Markup.button.callback(
-            'LV SHENGEN',
-            `register-user-serviceid-${ServiceIds.SHENGEN_LV}`
-          ),
-          Markup.button.callback(
-            'STUDENT',
-            `register-user-serviceid-${ServiceIds.STUDENT}`
-          ),
-          Markup.button.callback(
-            'CARRIER',
-            `register-user-serviceid-${ServiceIds.CARRIER}`
-          ),
+          // Markup.button.callback(
+          //   'LV SHENGEN',
+          //   `register-user-serviceid-${ServiceIds.SHENGEN_LV}`
+          // ),
+          // Markup.button.callback(
+          //   'STUDENT',
+          //   `register-user-serviceid-${ServiceIds.STUDENT}`
+          // ),
+          // Markup.button.callback(
+          //   'CARRIER',
+          //   `register-user-serviceid-${ServiceIds.CARRIER}`
+          // ),
           Markup.button.callback(
             'WORKER',
             `register-user-serviceid-${ServiceIds.WORKER}`
@@ -74,26 +73,72 @@ export class EnterLastName extends AddUserBase implements State {
     this._deps.bot.telegram.sendMessage(this._deps.chatId, 'Введите Фамилию');
   }
   hanlde(text: string): State {
+    if (text != 'text') {
+      if (this._userData?.serviceIds?.includes(ServiceIds.WORKER)) {
+        return new EnterAddFieldOne(this._deps, {
+          ...this._userData,
+          lastName: text,
+        });
+      } else if (
+        this._userData?.serviceIds?.includes(ServiceIds.SHENGEN_SW_EST)
+      ) {
+        return new EnterEmail(this._deps, {
+          ...this._userData,
+          lastName: text,
+        });
+      } else {
+        return new EnterServiceId(this._deps, {});
+      }
+    }
+    return this;
+  }
+}
+export class EnterAddFieldOne extends AddUserBase implements State {
+  ask() {
+    this._deps.bot.telegram.sendMessage(
+      this._deps.chatId,
+      'Введите первую часть номера приглашения'
+    );
+  }
+  hanlde(text: string): State {
     if (text != 'text')
-      return new EnterNotes(this._deps, {
+      return new EnterAddFieldTwo(this._deps, {
         ...this._userData,
-        lastName: text,
+        addFieldOne: text as UserData['addFieldOne'],
       });
     return this;
   }
 }
-export class EnterNotes extends AddUserBase implements State {
+
+export class EnterAddFieldTwo extends AddUserBase implements State {
   ask() {
     this._deps.bot.telegram.sendMessage(
       this._deps.chatId,
-      'Введите примечание'
+      'Введите вторую часть номера приглашения'
+    );
+  }
+  hanlde(text: string): State {
+    if (text != 'text')
+      return new EnterAddFieldThree(this._deps, {
+        ...this._userData,
+        addFieldTwo: text as UserData['addFieldTwo'],
+      });
+    return this;
+  }
+}
+
+export class EnterAddFieldThree extends AddUserBase implements State {
+  ask() {
+    this._deps.bot.telegram.sendMessage(
+      this._deps.chatId,
+      'Введите название приглашающей компании'
     );
   }
   hanlde(text: string): State {
     if (text != 'text')
       return new EnterEmail(this._deps, {
         ...this._userData,
-        notes: text as UserData['email'],
+        addFieldThree: text as UserData['addFieldThree'],
       });
     return this;
   }

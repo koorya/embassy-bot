@@ -1,10 +1,15 @@
-export const getStepFiveParams = (props: {
+type StepFiveBaseProps = {
   schedulerCookie: string;
   sessionCookie: string;
   step4Code: string;
-  notes_public: string;
   reCaptcha: string;
-}) => ({
+};
+type StepFiveWorkerProps = {
+  addFieldOne: string;
+  addFieldTwo: string;
+  addFieldThree: string;
+};
+export const getStepFiveParamsBase = (props: StepFiveBaseProps) => ({
   url: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step4',
   options: {
     headers: {
@@ -27,7 +32,29 @@ export const getStepFiveParams = (props: {
       Referer: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step4',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     },
-    body: `_csrf-mfa-scheduler=${props.step4Code}&notes_public=${props.notes_public}&reCaptcha=${props.reCaptcha}&personal-data=`,
+    body: `_csrf-mfa-scheduler=${props.step4Code}&notes_public=&reCaptcha=${props.reCaptcha}&personal-data=`,
     method: 'POST',
   },
 });
+export type TypeGetStepFiveParams = typeof getStepFiveParamsBase;
+
+export const getStepFiveParamsWorker = (props_ext: StepFiveWorkerProps) => {
+  return (props: StepFiveBaseProps) => {
+    const req = getStepFiveParamsBase(props);
+    req.options.body = `_csrf-mfa-scheduler=${
+      props.step4Code
+    }&${encodeURIComponent(
+      'Persons[0][service_field_ids][7]'
+    )}=${encodeURIComponent(props_ext.addFieldOne)}&${encodeURIComponent(
+      'Persons[0][service_field_ids][8]'
+    )}=${encodeURIComponent(props_ext.addFieldTwo)}&${encodeURIComponent(
+      'Persons[0][service_field_ids][23]'
+    )}=${encodeURIComponent(props_ext.addFieldThree)}&notes_public=&reCaptcha=${
+      props.reCaptcha
+    }&personal-data=`;
+
+    return req;
+  };
+};
+
+export const getStepFiveParamsShengen = () => getStepFiveParamsBase;

@@ -4,7 +4,11 @@ import { getStepTwoHeaders } from './headers/step_two';
 import { getDatesHeaders } from './headers/getDatesHeaders';
 import { ParseHelper } from './ParseHelper';
 import { CaptchaHelper } from './CaptchaHelper';
-import { getStepFiveParams } from './headers/step_five';
+import {
+  getStepFiveParamsShengen,
+  getStepFiveParamsWorker,
+  TypeGetStepFiveParams,
+} from './headers/step_five';
 import { getStepFourParams } from './headers/step_four';
 import { getAvailableOptions } from './headers/available_time';
 import { ResType } from '../embassy_worker/EmbassyWorker';
@@ -31,7 +35,9 @@ export type UserData = {
   lastName: string;
   email: `${string}@${string}`;
   serviceIds: ServiceIds[];
-  notes: string;
+  addFieldOne: string;
+  addFieldTwo: string;
+  addFieldThree: string;
 };
 
 enum RequesterStep {
@@ -261,7 +267,10 @@ export class EmbassyRequester {
     return this;
   }
 
-  private async _requestStepFive(notes_public: string, signal: AbortSignal) {
+  private async _requestStepFive(
+    getStepFiveParams: TypeGetStepFiveParams,
+    signal: AbortSignal
+  ) {
     if (!this._captchaHelper) {
       throw Error('Invalid captcha helper');
     }
@@ -297,7 +306,6 @@ export class EmbassyRequester {
 
     if (isAborted) return;
     const { url, options } = getStepFiveParams({
-      notes_public,
       reCaptcha,
       schedulerCookie,
       sessionCookie,
@@ -401,6 +409,16 @@ export class EmbassyRequester {
     return await this._requestStepFour(selectedTime.date, selectedTime.time);
   }
   async requestStepFive(signal: AbortSignal = new AbortController().signal) {
-    return await this._requestStepFive(this._userData.notes, signal);
+    if (this._userData.serviceIds[0] == ServiceIds.SHENGEN_SW_EST)
+      return await this._requestStepFive(getStepFiveParamsShengen(), signal);
+    if (this._userData.serviceIds[0] == ServiceIds.WORKER)
+      return await this._requestStepFive(
+        getStepFiveParamsWorker(this._userData),
+        signal
+      );
+    this._logger.error(
+      `ServiceId is not implemented: ${this._userData.serviceIds[0]}`
+    );
+    throw Error('ServiceId is not implemented');
   }
 }
