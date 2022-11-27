@@ -16,9 +16,17 @@ jobs:
       uses: burnett01/rsync-deployments@5.2.1
       with:
         switches: -avzr --delete --exclude=.env --exclude=mongo --exclude=logs
-        rsh: echo hello
         path: .
         remote_path: /home/kirill/embassy-bot
-        remote_host: 35.214.44.47
+        remote_host: ${{ secrets.DEPLOY_HOST }}
         remote_user: kirill
         remote_key: ${{ secrets.DEPLOY_KEY }}
+    - name: run containers
+      uses: garygrossgarten/github-action-ssh@release
+      with:
+        command: |
+          - cd /home/kirill/embassy-bot
+          - docker-compose up --build -d
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: kirill
+        privateKey: ${{ secrets.DEPLOY_KEY}}
