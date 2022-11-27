@@ -6,4 +6,4 @@ build
 mongo
 src/scripts
 untracked
-
+coverage

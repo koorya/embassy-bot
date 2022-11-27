@@ -5,3 +5,4 @@ logs
 build
 mongo
 untracked
+coverage 
