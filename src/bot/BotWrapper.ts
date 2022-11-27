@@ -121,7 +121,9 @@ export class BotWrapper {
               ext.serviceId == ServiceIds.WORKER
                 ? `${ext.addFieldOne} + ${ext.addFieldTwo} + ${ext.addFieldThree}`
                 : ''
-            } ${ext.serviceId} ${
+            } ${Object.entries(ServiceIds)
+              .find(([_, a]) => a == ext.serviceId)
+              ?.shift()} ${ext.serviceId} ${
               ext.isRegistered ? 'зарегистрирован на ' + ext.date : 'в очереди'
             }`,
             Markup.inlineKeyboard([
