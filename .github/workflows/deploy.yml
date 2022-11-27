@@ -1,0 +1,23 @@
+name: deploy-gcloud
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: rsync deployments
+      uses: burnett01/rsync-deployments@5.2.1
+      with:
+        switches: -avzr --delete
+        path: .
+        remote_path: /home/kirill/embassy-bot
+        remote_host: 35.214.44.47
+        remote_user: kirill
+        remote_key: ${{ secrets.DEPLOY_KEY }}
