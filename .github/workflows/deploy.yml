@@ -16,6 +16,7 @@ jobs:
       uses: burnett01/rsync-deployments@5.2.1
       with:
         switches: -avzr --delete --exclude=.env --exclude=mongo --exclude=logs
+        rsh: echo hello
         path: .
         remote_path: /home/kirill/embassy-bot
         remote_host: 35.214.44.47
