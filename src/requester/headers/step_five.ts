@@ -4,10 +4,9 @@ type StepFiveBaseProps = {
   step4Code: string;
   reCaptcha: string;
 };
-type StepFiveWorkerProps = {
-  addFieldOne: string;
-  addFieldTwo: string;
-  addFieldThree: string;
+export type StepFiveWorkerProps = {
+  invitationNumber: string;
+  orgName: string;
 };
 export const getStepFiveParamsBase = (props: StepFiveBaseProps) => ({
   url: 'https://pieraksts.mfa.gov.lv/ru/uzbekistan/step4',
@@ -45,11 +44,9 @@ export const getStepFiveParamsWorker = (props_ext: StepFiveWorkerProps) => {
       props.step4Code
     }&${encodeURIComponent(
       'Persons[0][service_field_ids][7]'
-    )}=${encodeURIComponent(props_ext.addFieldOne)}&${encodeURIComponent(
-      'Persons[0][service_field_ids][8]'
-    )}=${encodeURIComponent(props_ext.addFieldTwo)}&${encodeURIComponent(
+    )}=${encodeURIComponent(props_ext.invitationNumber)}&${encodeURIComponent(
       'Persons[0][service_field_ids][23]'
-    )}=${encodeURIComponent(props_ext.addFieldThree)}&notes_public=&reCaptcha=${
+    )}=${encodeURIComponent(props_ext.orgName)}&notes_public=&reCaptcha=${
       props.reCaptcha
     }&personal-data=`;
 

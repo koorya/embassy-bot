@@ -75,7 +75,7 @@ export class EnterLastName extends AddUserBase implements State {
   hanlde(text: string): State {
     if (text != 'text') {
       if (this._userData?.serviceId == ServiceIds.WORKER) {
-        return new EnterAddFieldOne(this._deps, {
+        return new EnterInvitationNumber(this._deps, {
           ...this._userData,
           lastName: text,
         });
@@ -91,7 +91,7 @@ export class EnterLastName extends AddUserBase implements State {
     return this;
   }
 }
-export class EnterAddFieldOne extends AddUserBase implements State {
+export class EnterInvitationNumber extends AddUserBase implements State {
   ask() {
     this._deps.bot.telegram.sendMessage(
       this._deps.chatId,
@@ -100,35 +100,16 @@ export class EnterAddFieldOne extends AddUserBase implements State {
   }
   hanlde(text: string): State {
     if (text != 'text')
-      return new EnterAddFieldTwo(this._deps, {
+      return new EnterOrgName(this._deps, {
         ...this._userData,
         serviceId: ServiceIds.WORKER,
-        addFieldOne: text,
+        invitationNumber: text,
       });
     return this;
   }
 }
 
-export class EnterAddFieldTwo extends AddUserBase implements State {
-  ask() {
-    this._deps.bot.telegram.sendMessage(
-      this._deps.chatId,
-      'Введите вторую часть номера приглашения'
-    );
-  }
-  hanlde(text: string): State {
-    if (text != 'text')
-      return new EnterAddFieldThree(this._deps, {
-        ...this._userData,
-
-        serviceId: ServiceIds.WORKER,
-        addFieldTwo: text,
-      });
-    return this;
-  }
-}
-
-export class EnterAddFieldThree extends AddUserBase implements State {
+export class EnterOrgName extends AddUserBase implements State {
   ask() {
     this._deps.bot.telegram.sendMessage(
       this._deps.chatId,
@@ -141,7 +122,7 @@ export class EnterAddFieldThree extends AddUserBase implements State {
         ...this._userData,
 
         serviceId: ServiceIds.WORKER,
-        addFieldThree: text,
+        orgName: text,
       });
     return this;
   }

@@ -7,6 +7,7 @@ import { CaptchaHelper } from './CaptchaHelper';
 import {
   getStepFiveParamsShengen,
   getStepFiveParamsWorker,
+  StepFiveWorkerProps,
   TypeGetStepFiveParams,
 } from './headers/step_five';
 import { getStepFourParams } from './headers/step_four';
@@ -39,12 +40,9 @@ export type UserDataBase = {
 };
 export type UserData = Omit<UserDataBase, 'serviceId'> &
   (
-    | {
+    | ({
         serviceId: ServiceIds.WORKER;
-        addFieldOne: string;
-        addFieldTwo: string;
-        addFieldThree: string;
-      }
+      } & StepFiveWorkerProps)
     | {
         serviceId: Exclude<ServiceIds, ServiceIds.WORKER>;
       }
@@ -325,6 +323,8 @@ export class EmbassyRequester {
 
     const text = await res.text();
 
+    this._logger.info('STEP FIVE REQUST: ', JSON.stringify(options));
+    this._logger.info('STEP FIVE REQUEST BODY: ', options.body);
     this._logger.info('STEP FIVE TEXT: ', text);
     if (isAborted) return;
     const code = this._parseHelper.parseStepCode(text);

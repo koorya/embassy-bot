@@ -24,11 +24,4 @@ describe('parse hepler', () => {
       'Pw109DNiyWXcY-h4m0ItTMTztPaGUb9FIoIzPBOqdy13YD2kZAD6UZ4E2RPsNx0oqIaHndQo1z9twUNvUOUnYA%3D%3D'
     );
   });
-  it('parsed cookie should', () => {
-    expect(responseCookie).toBe(1);
-    expect(parseHelper.parseCookie(responseCookie)).toMatchObject({
-      sessionCookie: '',
-      schedulerCookie: '',
-    });
-  });
 });

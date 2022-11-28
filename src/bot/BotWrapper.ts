@@ -119,7 +119,7 @@ export class BotWrapper {
             ctx.chat.id,
             `${firstName} ${lastName} ${phone} ${email} ${
               ext.serviceId == ServiceIds.WORKER
-                ? `${ext.addFieldOne} + ${ext.addFieldTwo} + ${ext.addFieldThree}`
+                ? `${ext.invitationNumber} + ${ext.orgName}`
                 : ''
             } ${Object.entries(ServiceIds)
               .find(([_, a]) => a == ext.serviceId)
