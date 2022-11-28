@@ -95,7 +95,7 @@ export class EnterInvitationNumber extends AddUserBase implements State {
   ask() {
     this._deps.bot.telegram.sendMessage(
       this._deps.chatId,
-      'Введите первую часть номера приглашения'
+      'Введите номер приглашения'
     );
   }
   hanlde(text: string): State {
