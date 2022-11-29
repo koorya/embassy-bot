@@ -1,7 +1,7 @@
 import { Collection, Db, WithId } from 'mongodb';
 import { UserData } from '../requester/EmbassyRequester';
 
-type ExtendedUserData = UserData &
+export type ExtendedUserData = UserData &
   (
     | { isRegistered: true; date: string; proxy?: string }
     | { isRegistered: false }
@@ -24,7 +24,9 @@ export class UserController {
     return await this._collection.find({ isRegistered: false }).toArray();
   }
   async addUser(data: UserData) {
-    await this._collection.insertOne({ ...data, isRegistered: false });
+    const user: ExtendedUserData = { ...data, isRegistered: false };
+    await this._collection.insertOne(user);
+    return user;
   }
   async removeUser(data: WithId<Partial<ExtendedUserData>>) {
     await this._collection.deleteOne({ _id: data._id });

@@ -2,12 +2,12 @@ import { Markup, Telegraf } from 'telegraf';
 import { ChatIdController } from '../db_controllers/ChatIdsController';
 import { MessageController } from '../db_controllers/MessageController';
 import { botLog, scrapLog } from '../loggers/logger';
-import { ServiceIds } from '../requester/EmbassyRequester';
 import { State } from './DialogController/States';
 import { EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
 import { ObjectId } from 'mongodb';
 import { ProxyController } from '../db_controllers/ProxyController';
+import { renderUser } from './renderUser';
 
 export class BotWrapper {
   bot: Telegraf;
@@ -113,23 +113,15 @@ export class BotWrapper {
           : cmd == 'all'
           ? await this._userController.listAll()
           : [];
-      const cnt = users.map(
-        ({ _id, email, firstName, lastName, phone, ...ext }) =>
-          ctx.telegram.sendMessage(
-            ctx.chat.id,
-            `${firstName} ${lastName} ${phone} ${email} ${
-              ext.serviceId == ServiceIds.WORKER
-                ? `${ext.invitationNumber} + ${ext.orgName}`
-                : ''
-            } ${Object.entries(ServiceIds)
-              .find(([_, a]) => a == ext.serviceId)
-              ?.shift()} ${ext.serviceId} ${
-              ext.isRegistered ? 'зарегистрирован на ' + ext.date : 'в очереди'
-            }`,
-            Markup.inlineKeyboard([
-              Markup.button.callback('Удалить', `remove-user-${_id}`),
-            ])
-          )
+
+      const cnt = users.map((user) =>
+        ctx.telegram.sendMessage(
+          ctx.chat.id,
+          renderUser(user),
+          Markup.inlineKeyboard([
+            Markup.button.callback('Удалить', `remove-user-${user._id}`),
+          ])
+        )
       ).length;
       if (cnt == 0) {
         await ctx.reply('Таких пользователей в базе нет');
@@ -143,7 +135,7 @@ export class BotWrapper {
           ctx.chat.id
         )}:${ctx.chat.id}; userId to remove - ${ctx.match[1]}`
       );
-      ctx.answerCbQuery();
+      ctx.answerCbQuery('Удален');
       this._userController.removeUser({ _id: new ObjectId(ctx.match[1]) });
     });
     bot.action(/remove-proxy-(.*)/, async (ctx) => {

@@ -22,7 +22,7 @@ export class BaseState {
 }
 export class Idle extends BaseState implements State {
   ask() {
-    this._deps.bot.telegram.sendMessage(this._deps.chatId, 'Выберете команду');
+    // this._deps.bot.telegram.sendMessage(this._deps.chatId, 'Выберете команду');
   }
   hanlde(text: string): State {
     // if (text!='text')

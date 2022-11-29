@@ -1,5 +1,6 @@
 import { Markup } from 'telegraf';
 import { ServiceIds, UserData } from '../../requester/EmbassyRequester';
+import { renderUser } from '../renderUser';
 import { BaseState, State, Idle, StateDeps } from './States';
 
 export class AddUserBase extends BaseState {
@@ -148,8 +149,9 @@ export class EnterPhone extends AddUserBase implements State {
   async hanlde(text: string) {
     if (text != 'text') {
       this._userData.phone = text as UserData['phone'];
-      await this._deps.userController.addUser(this._userData as UserData);
-      const { firstName, lastName, phone } = this.userData;
+      const user = await this._deps.userController.addUser(
+        this._userData as UserData
+      );
       this._deps.logger.info(
         `Add user with phone ${
           this._userData.phone
@@ -159,8 +161,7 @@ export class EnterPhone extends AddUserBase implements State {
       );
       await this._deps.bot.telegram.sendMessage(
         this._deps.chatId,
-
-        `Пользователь добавлен\n${firstName} ${lastName} ${phone}`
+        renderUser(user)
       );
       return new Idle(this._deps);
     }
