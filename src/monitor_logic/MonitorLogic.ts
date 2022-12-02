@@ -59,6 +59,7 @@ export abstract class MonitorLogicBase {
     return new Promise<void>((resolve) => {
       const onAbort = () => {
         clearTimeout(timeout);
+        ac.abort();
         resolve();
       };
       signal.addEventListener('abort', onAbort, { once: true });
