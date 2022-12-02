@@ -170,7 +170,13 @@ describe('MonitorLogic', () => {
 
   it('registerAll fault', async () => {
     const ac = new AbortController();
-    const reg = jest.fn().mockRejectedValue('Error, could not register');
+    const reg = jest
+      .fn(() => Promise.resolve())
+      .mockRejectedValueOnce('Error, could not register')
+      .mockRejectedValueOnce('Error, could not register')
+      .mockRejectedValueOnce('Error, could not register')
+      .mockRejectedValueOnce('Error, could not register');
+
     const mon = new MonitorLogicTest(
       { addMessage: adder },
       { registerAll: reg },
@@ -182,7 +188,6 @@ describe('MonitorLogic', () => {
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(false)
-        // .mockRejectedValueOnce("Error, can't check. Site unavailable")
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(true)
@@ -197,10 +202,48 @@ describe('MonitorLogic', () => {
     expect(adder.mock.calls[0][0]).toBe('Появились доступные даты');
     expect(adder.mock.calls[1][0]).toBe('Даты закончились');
     expect(mock_info.mock.calls.length).toBeGreaterThanOrEqual(10);
-    expect(mock_error.mock.calls[0][0]).toBe(
-      "Error, can't check. Site unavailable"
+    expect(mock_error.mock.calls[0][0]).toBe('Error, could not register');
+
+    expect(reg).toBeCalledTimes(5);
+    await worker;
+  });
+
+  it('registerAll exceed fault limit', async () => {
+    const ac = new AbortController();
+    const reg = jest.fn().mockRejectedValue('Error, could not register');
+
+    const mon = new MonitorLogicTest(
+      { addMessage: adder },
+      { registerAll: reg },
+      25
     );
-    expect(reg).toBeCalledTimes(1);
+    mon.getRegPossibilityChecker = () => ({
+      isPossibleToRegister: jest
+        .fn()
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(true)
+
+        .mockResolvedValue(false),
+    });
+    setTimeout(() => ac.abort(), 25 * 20);
+
+    const worker = mon.run(ac.signal);
+    await new Promise<void>((r) => setTimeout(r, 25 * 10));
+    expect(adder.mock.calls.length).toBe(2);
+    expect(adder.mock.calls[0][0]).toBe('Появились доступные даты');
+    expect(adder.mock.calls[1][0]).toBe('Даты закончились');
+    expect(mock_info.mock.calls.length).toBeGreaterThanOrEqual(10);
+
+    expect(mock_error.mock.calls.length).toBeGreaterThanOrEqual(20);
+
+    expect(mock_error.mock.calls[0][0]).toBe('Error, could not register');
+
+    expect(mock_error.mock.calls[20][0]).toBe('Error, could not register');
+    expect(reg).toBeCalledTimes(21);
     await worker;
   });
 });

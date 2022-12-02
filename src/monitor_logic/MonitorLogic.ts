@@ -39,19 +39,33 @@ export abstract class MonitorLogicBase {
     const mon = this.createMonitor();
     const possibilityChecker = this.getRegPossibilityChecker();
 
-    let ac = new AbortController();
-
+    const ac: AbortController[] = [];
+    let registrator_number = 0;
+    const registerAll = () => {
+      if (registrator_number > 20) {
+        this._logger.error('To try to register too many times');
+        return;
+      }
+      const n = ac.push(new AbortController()) - 1;
+      registrator_number++;
+      this._registrator
+        .registerAll(ac[n].signal)
+        .then(() => registrator_number--)
+        .catch((e) => {
+          this._logger.error(e);
+          ac.pop()?.abort;
+          registerAll();
+        });
+    };
     mon
       .addSwOnListener(() => {
         this._messageAdder.addMessage(`Появились доступные даты`);
       })
-      .addSwOnListener(() => {
-        ac = new AbortController();
-        this._registrator.registerAll(ac.signal);
-      })
+      .addSwOnListener(registerAll)
       .addSwOffListener(() => {
         this._logger.info('Stop registration');
-        ac.abort();
+
+        ac.pop()?.abort();
       })
       .addSwOffListener(() => {
         this._messageAdder.addMessage(`Даты закончились`);
@@ -59,7 +73,7 @@ export abstract class MonitorLogicBase {
     return new Promise<void>((resolve) => {
       const onAbort = () => {
         clearTimeout(timeout);
-        ac.abort();
+        ac.forEach((ac) => ac.abort());
         resolve();
       };
       signal.addEventListener('abort', onAbort, { once: true });
