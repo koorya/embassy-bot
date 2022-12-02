@@ -1,6 +1,6 @@
 import winston, { createLogger, format, transports } from 'winston';
 import { ProxyCreds } from '../db_controllers/ProxyController';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 import { CaptchaHelper } from '../requester/CaptchaHelper';
 import {
   EmbassyRequester,
@@ -73,7 +73,7 @@ export class EmbassyRegister {
           new Promise<ResType>(
             w(
               idx,
-              scrapLog.child({
+              ScrapeLogger.getInstance().child({
                 variant: `regworker_${timestamp}_${idx + 1}_of_${n}`,
               })
             )
@@ -114,7 +114,7 @@ export class EmbassyWorkerCreator {
         serviceId: ServiceIds.WORKER,
       } as UserData,
       null,
-      scrapLog.child({ variant: 'monitor' })
+      ScrapeLogger.getInstance().child({ variant: 'monitor' })
     );
     return new EmbassyChecker(requester);
   }

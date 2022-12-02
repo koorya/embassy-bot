@@ -1,20 +1,27 @@
 import winston from 'winston';
-import { MessageController } from '../db_controllers/MessageController';
-import { EmbassyWorkerCreator, ResType } from '../embassy_worker/EmbassyWorker';
-import { scrapLog } from '../loggers/logger';
+import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
+import { ScrapeLogger } from '../loggers/logger';
 import { Monitor } from './Monitor';
-import { Registrator } from './Registrator';
+
+export interface RegistratorAll {
+  registerAll(signal: AbortSignal): Promise<void>;
+}
+export interface MessegeAdder {
+  addMessage(text: string): Promise<void>;
+}
 
 export class MonitorLogic {
-  private _messageController: MessageController;
-  private _registrator: Registrator;
+  private _messageAdder: MessegeAdder;
+  private _registrator: RegistratorAll;
   private _logger: winston.Logger;
 
-  constructor(messageController: MessageController, registrator: Registrator) {
-    this._messageController = messageController;
+  constructor(messageAdder: MessegeAdder, registrator: RegistratorAll) {
+    this._messageAdder = messageAdder;
     this._registrator = registrator;
 
-    this._logger = scrapLog.child({ service: 'MonitorLogic' });
+    this._logger = ScrapeLogger.getInstance().child({
+      service: 'MonitorLogic',
+    });
   }
 
   async run(signal: AbortSignal) {
@@ -25,7 +32,7 @@ export class MonitorLogic {
 
     mon
       .on('switchOn', () => {
-        this._messageController.addMessage(`Появились доступные даты`);
+        this._messageAdder.addMessage(`Появились доступные даты`);
       })
       .on('switchOn', () => {
         ac = new AbortController();
@@ -36,7 +43,7 @@ export class MonitorLogic {
         ac.abort();
       })
       .on('switchOff', () => {
-        this._messageController.addMessage(`Даты закончились`);
+        this._messageAdder.addMessage(`Даты закончились`);
       });
 
     const embassy_monitor = embassyCreator.createEmbassyMonitor();

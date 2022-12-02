@@ -1,15 +1,18 @@
 import { Collection, Db } from 'mongodb';
 import winston from 'winston';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
+import { MessegeAdder } from '../monitor_logic/MonitorLogic';
 
 export type MessType = { message: string; recipients: number[] };
 
-export class MessageController {
+export class MessageController implements MessegeAdder {
   private _messageCollection: Collection<MessType>;
   private _logger: winston.Logger;
   constructor(db: Db) {
     this._messageCollection = db.collection<MessType>('messages');
-    this._logger = scrapLog.child({ service: 'MessageController' });
+    this._logger = ScrapeLogger.getInstance().child({
+      service: 'MessageController',
+    });
   }
   async setAsSended(mess: MessType, id: number) {
     await this._messageCollection.updateOne(mess, {

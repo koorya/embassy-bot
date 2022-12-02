@@ -3,9 +3,10 @@ import { MessageController } from '../db_controllers/MessageController';
 import { ProxyController } from '../db_controllers/ProxyController';
 import { UserController } from '../db_controllers/UserController';
 import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
+import { RegistratorAll } from './MonitorLogic';
 
-export class Registrator {
+export class Registrator implements RegistratorAll {
   private _userController: UserController;
   private _embassyCreator: EmbassyWorkerCreator;
   private _messageController: MessageController;
@@ -21,7 +22,7 @@ export class Registrator {
     this._messageController = messageController;
     this._proxyController = proxyController;
 
-    this._logger = scrapLog.child({ service: 'Registrator' });
+    this._logger = ScrapeLogger.getInstance().child({ service: 'Registrator' });
   }
 
   async registerAll(signal: AbortSignal) {

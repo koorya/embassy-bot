@@ -1,5 +1,5 @@
 import { Logger } from 'winston';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 
 export class CaptchaHelper {
   private _api_key: string;
@@ -8,7 +8,9 @@ export class CaptchaHelper {
   constructor(api_key: string) {
     this._api_key = api_key;
 
-    this._logger = scrapLog.child({ service: 'CaptchaHelper' });
+    this._logger = ScrapeLogger.getInstance().child({
+      service: 'CaptchaHelper',
+    });
   }
   async getRecaptcha(
     props: {

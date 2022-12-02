@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import winston from 'winston';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 
 enum MonitorStates {
   available,
@@ -13,7 +13,7 @@ export class Monitor extends EventEmitter {
   constructor() {
     super();
 
-    this._logger = scrapLog.child({ service: 'Monitor' });
+    this._logger = ScrapeLogger.getInstance().child({ service: 'Monitor' });
   }
   setAvailable() {
     this._logger.info('setAvailable');

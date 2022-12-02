@@ -1,7 +1,7 @@
 import { Markup, Telegraf } from 'telegraf';
 import { ChatIdController } from '../db_controllers/ChatIdsController';
 import { MessageController } from '../db_controllers/MessageController';
-import { botLog, scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 import { State } from './DialogController/States';
 import { EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
@@ -38,7 +38,9 @@ export class BotWrapper {
 
     bot.start(async (ctx) => {
       const chatIds = await this._chatIdController.getChatIds();
-      botLog.info(`start on chat id: ${ctx.chat.id}`);
+      ScrapeLogger.getTelegramInstance().info(
+        `start on chat id: ${ctx.chat.id}`
+      );
       if (!chatIds.includes(ctx.chat.id)) {
         chatIds.push(ctx.chat.id);
         await this._chatIdController.addId(
@@ -66,7 +68,7 @@ export class BotWrapper {
             bot,
             userController: this._userController,
             chatIdController: this._chatIdController,
-            logger: botLog,
+            logger: ScrapeLogger.getTelegramInstance(),
           },
           {}
         )
@@ -84,7 +86,9 @@ export class BotWrapper {
           port: ctx.match[4],
         });
         ctx.reply('Прокси добавлен');
-        botLog.info(`Прокси добавлен: ${ctx.match}`);
+        ScrapeLogger.getTelegramInstance().info(
+          `Прокси добавлен: ${ctx.match}`
+        );
       }
     );
     bot.hears(/\/list_proxy/, async (ctx) => {
@@ -100,7 +104,7 @@ export class BotWrapper {
         return null;
       }).length;
       if (cnt == 0) ctx.sendMessage('В базе нет ниодного прокси');
-      botLog.info(ctx.match);
+      ScrapeLogger.getTelegramInstance().info(ctx.match);
     });
 
     bot.hears(/\/list_((?:reg)|(?:notreg)|(?:all))/, async (ctx) => {
@@ -130,7 +134,7 @@ export class BotWrapper {
     bot.action(/remove-user-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
-      botLog.info(
+      ScrapeLogger.getTelegramInstance().info(
         `Remove user command executed by ${await this._chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; userId to remove - ${ctx.match[1]}`
@@ -141,7 +145,7 @@ export class BotWrapper {
     bot.action(/remove-proxy-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
-      botLog.info(
+      ScrapeLogger.getTelegramInstance().info(
         `Remove poxy command executed by ${await this._chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; host to remove - ${ctx.match[1]}`
@@ -186,7 +190,7 @@ export class BotWrapper {
           1000 * parseInt(process.env.MESSAGE_SENDER_INTERVAL || '1')
         );
       } catch (e) {
-        scrapLog.error(e);
+        ScrapeLogger.getInstance().error(e);
         cycle_timeout = setTimeout(messageSender, 0);
       }
     };
@@ -208,7 +212,11 @@ export class BotWrapper {
           .then((r) => {
             this._messageController.setAsSended(mess, id);
           })
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
+          .catch(() =>
+            ScrapeLogger.getTelegramInstance().error(
+              `Сообщение не отправлено ${id}`
+            )
+          )
       );
     });
   }

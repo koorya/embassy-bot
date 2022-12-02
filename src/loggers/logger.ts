@@ -1,17 +1,30 @@
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format, transports, Logger } from 'winston';
 
-export const scrapLog = createLogger({
-  format: format.combine(format.timestamp(), format.simple()),
-  transports: [
-    new transports.File({ filename: './logs/scrapper.log' }),
-    new transports.Console({}),
-  ],
-});
-
-export const botLog = createLogger({
-  format: format.combine(format.timestamp(), format.simple()),
-  transports: [
-    new transports.File({ filename: './logs/bot.log' }),
-    new transports.Console({}),
-  ],
-});
+export class ScrapeLogger {
+  private static _logger: Logger;
+  private static _telegram_logger: Logger;
+  static getInstance(): Logger {
+    if (!this._logger) {
+      this._logger = createLogger({
+        format: format.combine(format.timestamp(), format.simple()),
+        transports: [
+          new transports.File({ filename: './logs/scrapper.log' }),
+          new transports.Console({}),
+        ],
+      });
+    }
+    return this._logger;
+  }
+  static getTelegramInstance(): Logger {
+    if (!this._telegram_logger) {
+      this._telegram_logger = createLogger({
+        format: format.combine(format.timestamp(), format.simple()),
+        transports: [
+          new transports.File({ filename: './logs/scrapper.log' }),
+          new transports.Console({}),
+        ],
+      });
+    }
+    return this._telegram_logger;
+  }
+}
