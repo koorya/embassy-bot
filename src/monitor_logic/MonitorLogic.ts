@@ -18,14 +18,20 @@ export abstract class MonitorLogicBase {
   private _messageAdder: MessegeAdder;
   private _registrator: RegistratorAll;
   private _logger: winston.Logger;
+  private _interval_ms: number;
 
-  constructor(messageAdder: MessegeAdder, registrator: RegistratorAll) {
+  constructor(
+    messageAdder: MessegeAdder,
+    registrator: RegistratorAll,
+    interval_ms: number
+  ) {
     this._messageAdder = messageAdder;
     this._registrator = registrator;
 
     this._logger = ScrapeLogger.getInstance().child({
       service: 'MonitorLogic',
     });
+    this._interval_ms = interval_ms;
   }
   abstract createMonitor(): Monitor;
   abstract getRegPossibilityChecker(): RegPosibilityChecker;
@@ -50,30 +56,29 @@ export abstract class MonitorLogicBase {
       .addSwOffListener(() => {
         this._messageAdder.addMessage(`Даты закончились`);
       });
+    return new Promise<void>((resolve) => {
+      const onAbort = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
 
-    const onAbort = () => {
-      clearTimeout(timeout);
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-
-    const cycleMonitor = async () => {
-      try {
-        if (await possibilityChecker.isPossibleToRegister()) {
-          mon.setAvailable();
-        } else {
-          mon.setUnavailable();
+      const cycleMonitor = async () => {
+        try {
+          if (await possibilityChecker.isPossibleToRegister()) {
+            mon.setAvailable();
+          } else {
+            mon.setUnavailable();
+          }
+          timeout = setTimeout(cycleMonitor, this._interval_ms);
+        } catch (e) {
+          this._logger.error(e);
+          timeout = setTimeout(cycleMonitor, 0);
         }
-        timeout = setTimeout(
-          cycleMonitor,
-          1000 * parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')
-        );
-      } catch (e) {
-        this._logger.error(e);
-        timeout = setTimeout(cycleMonitor, 0);
-      }
-    };
+      };
 
-    let timeout = setTimeout(cycleMonitor, 0);
+      let timeout = setTimeout(cycleMonitor, 0);
+    });
   }
 }
 export class MonitorLogicProd extends MonitorLogicBase {

@@ -30,7 +30,11 @@ const main = async () => {
 
   bot.run(ac.signal);
 
-  const monitor = new MonitorLogicProd(messageController, registrator);
+  const monitor = new MonitorLogicProd(
+    messageController,
+    registrator,
+    1000 * parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')
+  );
   monitor.run(ac.signal);
 
   // Enable graceful stop
