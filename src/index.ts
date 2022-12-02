@@ -2,7 +2,7 @@ import { MessageController } from './db_controllers/MessageController';
 import { ChatIdController } from './db_controllers/ChatIdsController';
 import { BotWrapper } from './bot/BotWrapper';
 import { DBCreator } from './db_controllers/db';
-import { MonitorLogic } from './monitor_logic/MonitorLogic';
+import { MonitorLogicProd } from './monitor_logic/MonitorLogic';
 import { UserController } from './db_controllers/UserController';
 import { Registrator } from './monitor_logic/Registrator';
 import { ProxyController } from './db_controllers/ProxyController';
@@ -30,7 +30,7 @@ const main = async () => {
 
   bot.run(ac.signal);
 
-  const monitor = new MonitorLogic(messageController, registrator);
+  const monitor = new MonitorLogicProd(messageController, registrator);
   monitor.run(ac.signal);
 
   // Enable graceful stop

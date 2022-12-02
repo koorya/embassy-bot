@@ -6,7 +6,15 @@ enum MonitorStates {
   available,
   unavailable,
 }
-export class Monitor extends EventEmitter {
+type Listener = Parameters<EventEmitter['on']>[1];
+
+export interface Monitor {
+  setAvailable(): void;
+  setUnavailable(): void;
+  addSwOnListener(l: Listener): Monitor;
+  addSwOffListener(l: Listener): Monitor;
+}
+export class MonitorProd extends EventEmitter implements Monitor {
   private _state: MonitorStates = MonitorStates.unavailable;
   private _logger: winston.Logger;
 
@@ -31,5 +39,12 @@ export class Monitor extends EventEmitter {
 
     this._logger.info('switchOff emit');
     this.emit('switchOff');
+  }
+
+  addSwOnListener(listener: Listener) {
+    return this.on('switchOn', listener);
+  }
+  addSwOffListener(listener: Listener) {
+    return this.on('switchOff', listener);
   }
 }

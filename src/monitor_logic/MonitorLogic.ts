@@ -1,7 +1,7 @@
 import winston from 'winston';
 import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
 import { ScrapeLogger } from '../loggers/logger';
-import { Monitor } from './Monitor';
+import { Monitor, MonitorProd } from './Monitor';
 
 export interface RegistratorAll {
   registerAll(signal: AbortSignal): Promise<void>;
@@ -10,7 +10,11 @@ export interface MessegeAdder {
   addMessage(text: string): Promise<void>;
 }
 
-export class MonitorLogic {
+interface RegPosibilityChecker {
+  isPossibleToRegister(): Promise<boolean>;
+}
+
+export abstract class MonitorLogicBase {
   private _messageAdder: MessegeAdder;
   private _registrator: RegistratorAll;
   private _logger: winston.Logger;
@@ -23,30 +27,30 @@ export class MonitorLogic {
       service: 'MonitorLogic',
     });
   }
-
+  abstract createMonitor(): Monitor;
+  abstract getRegPossibilityChecker(): RegPosibilityChecker;
   async run(signal: AbortSignal) {
-    const mon = new Monitor();
+    const mon = this.createMonitor();
+    const possibilityChecker = this.getRegPossibilityChecker();
 
     let ac = new AbortController();
-    const embassyCreator = new EmbassyWorkerCreator();
 
     mon
-      .on('switchOn', () => {
+      .addSwOnListener(() => {
         this._messageAdder.addMessage(`Появились доступные даты`);
       })
-      .on('switchOn', () => {
+      .addSwOnListener(() => {
         ac = new AbortController();
         this._registrator.registerAll(ac.signal);
       })
-      .on('switchOff', () => {
+      .addSwOffListener(() => {
         this._logger.info('Stop registration');
         ac.abort();
       })
-      .on('switchOff', () => {
+      .addSwOffListener(() => {
         this._messageAdder.addMessage(`Даты закончились`);
       });
 
-    const embassy_monitor = embassyCreator.createEmbassyMonitor();
     const onAbort = () => {
       clearTimeout(timeout);
     };
@@ -54,7 +58,7 @@ export class MonitorLogic {
 
     const cycleMonitor = async () => {
       try {
-        if (await embassy_monitor.isPossibleToRegister()) {
+        if (await possibilityChecker.isPossibleToRegister()) {
           mon.setAvailable();
         } else {
           mon.setUnavailable();
@@ -70,5 +74,15 @@ export class MonitorLogic {
     };
 
     let timeout = setTimeout(cycleMonitor, 0);
+  }
+}
+export class MonitorLogicProd extends MonitorLogicBase {
+  createMonitor(): Monitor {
+    return new MonitorProd();
+  }
+  getRegPossibilityChecker() {
+    const embassyCreator = new EmbassyWorkerCreator();
+    const possibilityChecker = embassyCreator.createEmbassyMonitor();
+    return possibilityChecker;
   }
 }
