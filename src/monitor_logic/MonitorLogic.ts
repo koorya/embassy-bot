@@ -18,26 +18,19 @@ export interface Monitor {
 
 export abstract class MonitorLogicBase {
   // pattern template method
-  private _messageAdder: MessegeAdder;
-  private _registrator: RegistratorAll;
   private _logger: winston.Logger;
-  private _interval_ms: number;
 
   constructor(
-    messageAdder: MessegeAdder,
-    registrator: RegistratorAll,
-    interval_ms: number
+    private _messageAdder: MessegeAdder,
+    private _registrator: RegistratorAll,
+    private _interval_ms: number
   ) {
-    this._messageAdder = messageAdder;
-    this._registrator = registrator;
-
     this._logger = ScrapeLogger.getInstance().child({
       service: 'MonitorLogic',
     });
-    this._interval_ms = interval_ms;
   }
-  abstract getMonitor(): Monitor;
 
+  abstract getMonitor(): Monitor;
   abstract isPossibleToRegister(): Promise<boolean>;
 
   async run(signal: AbortSignal) {
