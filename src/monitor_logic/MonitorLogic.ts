@@ -1,18 +1,12 @@
 import winston from 'winston';
-import { EmbassyChecker } from '../embassy_worker/EmbassyChecker';
-import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
 import { ScrapeLogger } from '../loggers/logger';
-import { MonitorProd } from './Monitor';
 import { Listener } from './types';
+
 export interface RegistratorAll {
   registerAll(signal: AbortSignal): Promise<void>;
 }
 export interface MessegeAdder {
   addMessage(text: string): Promise<void>;
-}
-
-interface RegPosibilityChecker {
-  isPossibleToRegister(): Promise<boolean>;
 }
 
 export interface Monitor {
@@ -23,6 +17,7 @@ export interface Monitor {
 }
 
 export abstract class MonitorLogicBase {
+  // pattern template method
   private _messageAdder: MessegeAdder;
   private _registrator: RegistratorAll;
   private _logger: winston.Logger;
@@ -41,11 +36,12 @@ export abstract class MonitorLogicBase {
     });
     this._interval_ms = interval_ms;
   }
-  abstract createMonitor(): Monitor;
-  abstract getRegPossibilityChecker(): RegPosibilityChecker;
+  abstract getMonitor(): Monitor;
+
+  abstract isPossibleToRegister(): Promise<boolean>;
+
   async run(signal: AbortSignal) {
-    const mon = this.createMonitor();
-    const possibilityChecker = this.getRegPossibilityChecker();
+    const mon = this.getMonitor();
 
     const ac: AbortController[] = [];
     let registrator_number = 0;
@@ -88,7 +84,7 @@ export abstract class MonitorLogicBase {
 
       const cycleMonitor = async () => {
         try {
-          if (await possibilityChecker.isPossibleToRegister()) {
+          if (await this.isPossibleToRegister()) {
             mon.setAvailable();
           } else {
             mon.setUnavailable();
@@ -105,19 +101,20 @@ export abstract class MonitorLogicBase {
   }
 }
 
-export interface EmbassyMonitorCreator {
-  createEmbassyMonitor(): EmbassyChecker;
-}
-
-export class MonitorLogicProd extends MonitorLogicBase {
-  createMonitor(): Monitor {
-    return new MonitorProd();
+export class MonitorLogicConcrete extends MonitorLogicBase {
+  constructor(
+    private _monitor: Monitor,
+    private _possibilityChecker: {
+      isPossibleToRegister: () => Promise<boolean>;
+    },
+    ...props: ConstructorParameters<typeof MonitorLogicBase>
+  ) {
+    super(...props);
   }
-  getRegPossibilityChecker() {
-    const embassyCreator: EmbassyMonitorCreator = new EmbassyWorkerCreator(
-      false
-    );
-    const possibilityChecker = embassyCreator.createEmbassyMonitor();
-    return possibilityChecker;
+  getMonitor(): Monitor {
+    return this._monitor;
+  }
+  isPossibleToRegister(): Promise<boolean> {
+    return this._possibilityChecker.isPossibleToRegister();
   }
 }

@@ -1,5 +1,5 @@
 import { MonitorProd } from './Monitor';
-import { MonitorLogicBase } from './MonitorLogic';
+import { MonitorLogicConcrete } from './MonitorLogic';
 
 const mock_info = jest.fn();
 const mock_error = jest.fn();
@@ -17,16 +17,6 @@ jest.mock('../loggers/logger', () => {
   };
 });
 
-class MonitorLogicTest extends MonitorLogicBase {
-  createMonitor() {
-    return new MonitorProd();
-  }
-  getRegPossibilityChecker() {
-    return {
-      isPossibleToRegister: jest.fn().mockResolvedValue(false),
-    };
-  }
-}
 describe('MonitorLogic', () => {
   const adder = jest.fn();
   const reg = jest.fn();
@@ -38,22 +28,25 @@ describe('MonitorLogic', () => {
   });
   it('date availabe swith on and off, abort reg, when off', async () => {
     const ac = new AbortController();
-    const mon = new MonitorLogicTest(
+
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValue(false),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValue(false),
-    });
+
     setTimeout(() => ac.abort(), 25 * 20);
     const worker = mon.run(ac.signal);
     await new Promise<void>((r) => setTimeout(r, 25 * 10));
@@ -84,19 +77,21 @@ describe('MonitorLogic', () => {
   it('should abort only end', async () => {
     const ac = new AbortController();
 
-    const mon = new MonitorLogicTest(
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValue(true),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValue(true),
-    });
+
     setTimeout(() => ac.abort(), 25 * 20);
 
     const worker = mon.run(ac.signal);
@@ -114,17 +109,18 @@ describe('MonitorLogic', () => {
   it('should not reg cause not possible', async () => {
     const ac = new AbortController();
 
-    const mon = new MonitorLogicTest(
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValue(false),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValue(false),
-    });
     setTimeout(() => ac.abort(), 25 * 20);
 
     const worker = mon.run(ac.signal);
@@ -137,22 +133,24 @@ describe('MonitorLogic', () => {
 
   it('possibility checker fault', async () => {
     const ac = new AbortController();
-    const mon = new MonitorLogicTest(
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockRejectedValueOnce("Error, can't check. Site unavailable")
+          .mockResolvedValueOnce(true)
+
+          .mockResolvedValue(false),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockRejectedValueOnce("Error, can't check. Site unavailable")
-        .mockResolvedValueOnce(true)
 
-        .mockResolvedValue(false),
-    });
     setTimeout(() => ac.abort(), 25 * 20);
 
     const worker = mon.run(ac.signal);
@@ -177,23 +175,24 @@ describe('MonitorLogic', () => {
       .mockRejectedValueOnce('Error, could not register')
       .mockRejectedValueOnce('Error, could not register');
 
-    const mon = new MonitorLogicTest(
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+
+          .mockResolvedValue(false),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-
-        .mockResolvedValue(false),
-    });
     setTimeout(() => ac.abort(), 25 * 20);
 
     const worker = mon.run(ac.signal);
@@ -212,23 +211,24 @@ describe('MonitorLogic', () => {
     const ac = new AbortController();
     const reg = jest.fn().mockRejectedValue('Error, could not register');
 
-    const mon = new MonitorLogicTest(
+    const mon = new MonitorLogicConcrete(
+      new MonitorProd(),
+      {
+        isPossibleToRegister: jest
+          .fn()
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(false)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+          .mockResolvedValueOnce(true)
+
+          .mockResolvedValue(false),
+      },
       { addMessage: adder },
       { registerAll: reg },
       25
     );
-    mon.getRegPossibilityChecker = () => ({
-      isPossibleToRegister: jest
-        .fn()
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(true)
-
-        .mockResolvedValue(false),
-    });
     setTimeout(() => ac.abort(), 25 * 20);
 
     const worker = mon.run(ac.signal);

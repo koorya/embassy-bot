@@ -2,11 +2,12 @@ import { MessageController } from './db_controllers/MessageController';
 import { ChatIdController } from './db_controllers/ChatIdsController';
 import { BotWrapper } from './bot/BotWrapper';
 import { DBCreator } from './db_controllers/db';
-import { MonitorLogicProd } from './monitor_logic/MonitorLogic';
+import { MonitorLogicConcrete } from './monitor_logic/MonitorLogic';
 import { UserController } from './db_controllers/UserController';
 import { Registrator } from './monitor_logic/Registrator';
 import { ProxyController } from './db_controllers/ProxyController';
 import { EmbassyWorkerCreator } from './embassy_worker/EmbassyWorker';
+import { MonitorProd } from './monitor_logic/Monitor';
 
 const main = async () => {
   const ac = new AbortController();
@@ -35,7 +36,10 @@ const main = async () => {
 
   bot.run(ac.signal);
 
-  const monitor = new MonitorLogicProd(
+  const monitor = new MonitorLogicConcrete(
+    new MonitorProd(),
+    new EmbassyWorkerCreator(false).createEmbassyMonitor(),
+
     messageController,
     registrator,
     1000 * parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')

@@ -1,6 +1,5 @@
 import { ProxyCreds } from '../db_controllers/ProxyController';
 import { ScrapeLogger } from '../loggers/logger';
-import { EmbassyMonitorCreator } from '../monitor_logic/MonitorLogic';
 import { EmbassyRegisterCreator } from '../monitor_logic/Registrator';
 import {
   EmbassyRequester,
@@ -14,9 +13,7 @@ import {
   EmbassyRegisterProd,
 } from './EmbassyRegister';
 
-export class EmbassyWorkerCreator
-  implements EmbassyRegisterCreator, EmbassyMonitorCreator
-{
+export class EmbassyWorkerCreator implements EmbassyRegisterCreator {
   private _parallel_factor: number;
   private _is_dev: boolean;
   constructor(dev_mode: boolean, parallel_factor?: number) {
