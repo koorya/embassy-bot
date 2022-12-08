@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { EmbassyChecker } from '../embassy_worker/EmbassyChecker';
 import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
 import { ScrapeLogger } from '../loggers/logger';
 import { Monitor, MonitorProd } from './Monitor';
@@ -96,12 +97,19 @@ export abstract class MonitorLogicBase {
     });
   }
 }
+
+export interface EmbassyMonitorCreator {
+  createEmbassyMonitor(): EmbassyChecker;
+}
+
 export class MonitorLogicProd extends MonitorLogicBase {
   createMonitor(): Monitor {
     return new MonitorProd();
   }
   getRegPossibilityChecker() {
-    const embassyCreator = new EmbassyWorkerCreator();
+    const embassyCreator: EmbassyMonitorCreator = new EmbassyWorkerCreator(
+      false
+    );
     const possibilityChecker = embassyCreator.createEmbassyMonitor();
     return possibilityChecker;
   }

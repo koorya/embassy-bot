@@ -6,6 +6,7 @@ import { MonitorLogicProd } from './monitor_logic/MonitorLogic';
 import { UserController } from './db_controllers/UserController';
 import { Registrator } from './monitor_logic/Registrator';
 import { ProxyController } from './db_controllers/ProxyController';
+import { EmbassyWorkerCreator } from './embassy_worker/EmbassyWorker';
 
 const main = async () => {
   const ac = new AbortController();
@@ -16,10 +17,14 @@ const main = async () => {
   const messageController = new MessageController(db);
   const userController = new UserController(db);
   const proxyController = new ProxyController(db);
+
+  const embassyWorkerCreator = new EmbassyWorkerCreator(!!process.env.DEV_MODE);
+
   const registrator = new Registrator(
     userController,
     messageController,
-    proxyController
+    proxyController,
+    embassyWorkerCreator
   );
   const bot = new BotWrapper(
     chatIdController,

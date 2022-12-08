@@ -1,24 +1,30 @@
 import winston from 'winston';
 import { MessageController } from '../db_controllers/MessageController';
-import { ProxyController } from '../db_controllers/ProxyController';
+import { ProxyController, ProxyCreds } from '../db_controllers/ProxyController';
 import { UserController } from '../db_controllers/UserController';
-import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
+import { EmbassyRegister } from '../embassy_worker/EmbassyRegister';
 import { ScrapeLogger } from '../loggers/logger';
+import { UserData } from '../requester/EmbassyRequester';
 import { RegistratorAll } from './MonitorLogic';
+
+export interface EmbassyRegisterCreator {
+  createEmbassyRegister(userData: UserData, proxy: ProxyCreds): EmbassyRegister;
+}
 
 export class Registrator implements RegistratorAll {
   private _userController: UserController;
-  private _embassyCreator: EmbassyWorkerCreator;
+  private _embassyRegisterCreator: EmbassyRegisterCreator;
   private _messageController: MessageController;
   private _proxyController: ProxyController;
   private _logger: winston.Logger;
   constructor(
     userController: UserController,
     messageController: MessageController,
-    proxyController: ProxyController
+    proxyController: ProxyController,
+    embassyRegisterCreator: EmbassyRegisterCreator
   ) {
     this._userController = userController;
-    this._embassyCreator = new EmbassyWorkerCreator();
+    this._embassyRegisterCreator = embassyRegisterCreator;
     this._messageController = messageController;
     this._proxyController = proxyController;
 
@@ -35,18 +41,12 @@ export class Registrator implements RegistratorAll {
     this._logger.info(`Proxies to register: ${proxyList.length}`);
     this._logger.info(`Users to register: ${users_to_register.length}`);
     const registrators = users_to_register.map((ud, idx) =>
-      this._embassyCreator.createEmbassyRegister(ud, proxyList[idx])
+      this._embassyRegisterCreator.createEmbassyRegister(ud, proxyList[idx])
     );
-    Promise.allSettled(
-      registrators.map((r) => {
-        if (process.env.DEV_MODE) return r.registerUserFake(signal);
-
-        return r.registerUser(signal);
-      })
-    )
+    Promise.allSettled(registrators.map((r) => r.registerUser(signal)))
       .then((r) => {
         r?.map(async (r) => {
-          if (r.status == 'fulfilled' && !!r.value) {
+          if (r.status == 'fulfilled' && !!r.value && r.value.isRegistered) {
             const {
               userData: { firstName, email, lastName, phone },
               date: { date, time },
