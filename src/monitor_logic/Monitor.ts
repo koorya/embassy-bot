@@ -1,19 +1,13 @@
-import { EventEmitter } from 'node:events';
 import winston from 'winston';
 import { ScrapeLogger } from '../loggers/logger';
-
+import { EventEmitter } from 'node:events';
+import { Monitor } from './MonitorLogic';
+import { Listener } from './types';
 enum MonitorStates {
   available,
   unavailable,
 }
-type Listener = Parameters<EventEmitter['on']>[1];
 
-export interface Monitor {
-  setAvailable(): void;
-  setUnavailable(): void;
-  addSwOnListener(l: Listener): Monitor;
-  addSwOffListener(l: Listener): Monitor;
-}
 export class MonitorProd extends EventEmitter implements Monitor {
   private _state: MonitorStates = MonitorStates.unavailable;
   private _logger: winston.Logger;

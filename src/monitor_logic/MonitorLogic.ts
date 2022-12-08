@@ -2,8 +2,8 @@ import winston from 'winston';
 import { EmbassyChecker } from '../embassy_worker/EmbassyChecker';
 import { EmbassyWorkerCreator } from '../embassy_worker/EmbassyWorker';
 import { ScrapeLogger } from '../loggers/logger';
-import { Monitor, MonitorProd } from './Monitor';
-
+import { MonitorProd } from './Monitor';
+import { Listener } from './types';
 export interface RegistratorAll {
   registerAll(signal: AbortSignal): Promise<void>;
 }
@@ -13,6 +13,13 @@ export interface MessegeAdder {
 
 interface RegPosibilityChecker {
   isPossibleToRegister(): Promise<boolean>;
+}
+
+export interface Monitor {
+  setAvailable(): void;
+  setUnavailable(): void;
+  addSwOnListener(l: Listener): Monitor;
+  addSwOffListener(l: Listener): Monitor;
 }
 
 export abstract class MonitorLogicBase {
