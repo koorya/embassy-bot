@@ -2,13 +2,6 @@ import winston from 'winston';
 import { ScrapeLogger } from '../loggers/logger';
 import { Listener } from './types';
 
-export interface RegistratorAll {
-  registerAll(signal: AbortSignal): Promise<void>;
-}
-export interface MessegeAdder {
-  addMessage(text: string): Promise<void>;
-}
-
 export interface Monitor {
   setAvailable(): void;
   setUnavailable(): void;
@@ -20,18 +13,15 @@ export abstract class MonitorLogicBase {
   // pattern template method
   private _logger: winston.Logger;
 
-  constructor(
-    private _messageAdder: MessegeAdder,
-    private _registrator: RegistratorAll,
-    private _monitor: Monitor,
-    private _interval_ms: number
-  ) {
+  constructor(private _monitor: Monitor, private _interval_ms: number) {
     this._logger = ScrapeLogger.getInstance().child({
       service: 'MonitorLogic',
     });
   }
 
   abstract isPossibleToRegister(): Promise<boolean>;
+  abstract addMessage(text: string): Promise<void>;
+  abstract registerAll(signal: AbortSignal): Promise<void>;
 
   async run(signal: AbortSignal) {
     const mon = this._monitor;
@@ -45,8 +35,7 @@ export abstract class MonitorLogicBase {
       }
       const n = ac.push(new AbortController()) - 1;
       registrator_number++;
-      this._registrator
-        .registerAll(ac[n].signal)
+      this.registerAll(ac[n].signal)
         .then(() => registrator_number--)
         .catch((e) => {
           this._logger.error(e);
@@ -56,7 +45,7 @@ export abstract class MonitorLogicBase {
     };
     mon
       .addSwOnListener(() => {
-        this._messageAdder.addMessage(`Появились доступные даты`);
+        this.addMessage(`Появились доступные даты`);
       })
       .addSwOnListener(registerAll)
       .addSwOffListener(() => {
@@ -65,7 +54,7 @@ export abstract class MonitorLogicBase {
         ac.pop()?.abort();
       })
       .addSwOffListener(() => {
-        this._messageAdder.addMessage(`Даты закончились`);
+        this.addMessage(`Даты закончились`);
       });
     return new Promise<void>((resolve) => {
       const onAbort = () => {

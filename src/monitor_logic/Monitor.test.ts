@@ -1,4 +1,4 @@
-import { MonitorProd } from './Monitor';
+import { MonitorConcrete } from './Monitor';
 import { Monitor } from './MonitorLogicBase';
 
 const mock_info = jest.fn();
@@ -16,7 +16,7 @@ jest.mock('../loggers/logger', () => {
 describe('Monitor', () => {
   it('on off', () => {
     mock_info.mockReset();
-    const mon: Monitor = new MonitorProd();
+    const mon: Monitor = new MonitorConcrete();
     const mock = {
       swOn1: jest.fn(),
       swOn2: jest.fn(),
@@ -57,7 +57,7 @@ describe('Monitor', () => {
   });
 
   it('multiple on/off', () => {
-    const mon: Monitor = new MonitorProd();
+    const mon: Monitor = new MonitorConcrete();
     // mon.
     const mock = {
       swOn1: jest.fn(),

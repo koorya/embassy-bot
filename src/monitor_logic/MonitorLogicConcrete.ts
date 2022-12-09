@@ -5,6 +5,13 @@ export class MonitorLogicConcrete extends MonitorLogicBase {
     private _possibilityChecker: {
       isPossibleToRegister: () => Promise<boolean>;
     },
+    private _messageAdder: {
+      addMessage(text: string): Promise<void>;
+    },
+    private _registrator: {
+      registerAll(signal: AbortSignal): Promise<void>;
+    },
+
     ...props: ConstructorParameters<typeof MonitorLogicBase>
   ) {
     super(...props);
@@ -12,5 +19,11 @@ export class MonitorLogicConcrete extends MonitorLogicBase {
 
   isPossibleToRegister(): Promise<boolean> {
     return this._possibilityChecker.isPossibleToRegister();
+  }
+  addMessage(text: string): Promise<void> {
+    return this._messageAdder.addMessage(text);
+  }
+  registerAll(signal: AbortSignal): Promise<void> {
+    return this._registrator.registerAll(signal);
   }
 }

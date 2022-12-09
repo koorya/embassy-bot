@@ -8,7 +8,7 @@ enum MonitorStates {
   unavailable,
 }
 
-export class MonitorProd extends EventEmitter implements Monitor {
+export class MonitorConcrete extends EventEmitter implements Monitor {
   private _state: MonitorStates = MonitorStates.unavailable;
   private _logger: winston.Logger;
 

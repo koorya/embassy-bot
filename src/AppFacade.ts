@@ -7,7 +7,7 @@ import { UserController } from './db_controllers/UserController';
 import { Registrator } from './monitor_logic/Registrator';
 import { ProxyController } from './db_controllers/ProxyController';
 import { EmbassyWorkerCreator } from './embassy_worker/EmbassyWorker';
-import { MonitorProd } from './monitor_logic/Monitor';
+import { MonitorConcrete } from './monitor_logic/Monitor';
 import { Db } from 'mongodb';
 
 type Controllers = {
@@ -52,7 +52,7 @@ export class AppFacade {
       new EmbassyWorkerCreator(this._isDevMode).createEmbassyMonitor(),
       ctrl.messageController,
       this._createRegistrator(ctrl),
-      new MonitorProd(),
+      new MonitorConcrete(),
       this._monitor_interval_ms
     ).run(ac.signal);
   }

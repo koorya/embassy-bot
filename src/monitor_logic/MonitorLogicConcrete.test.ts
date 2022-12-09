@@ -1,4 +1,4 @@
-import { MonitorProd } from './Monitor';
+import { MonitorConcrete } from './Monitor';
 import { MonitorLogicConcrete } from './MonitorLogicConcrete';
 
 const mock_info = jest.fn();
@@ -43,7 +43,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
 
@@ -88,7 +88,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
 
@@ -118,7 +118,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);
@@ -147,7 +147,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
 
@@ -190,7 +190,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);
@@ -226,7 +226,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
-      new MonitorProd(),
+      new MonitorConcrete(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);
