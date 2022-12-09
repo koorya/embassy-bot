@@ -21,7 +21,7 @@ export class AppFacade {
   constructor(
     private _isDevMode: boolean,
     private _botToken: string,
-    private _monitor_interval: number
+    private _monitor_interval_ms: number
   ) {}
   run(ac: AbortController) {
     const db = AppFacade._createDBConnection();
@@ -50,10 +50,10 @@ export class AppFacade {
   private _runMonitor(ctrl: Controllers, ac: AbortController) {
     new MonitorLogicConcrete(
       new MonitorProd(),
-      new EmbassyWorkerCreator(!!process.env.DEV_MODE).createEmbassyMonitor(),
+      new EmbassyWorkerCreator(this._isDevMode).createEmbassyMonitor(),
       ctrl.messageController,
       this._createRegistrator(ctrl),
-      1000 * this._monitor_interval
+      this._monitor_interval_ms
     ).run(ac.signal);
   }
 

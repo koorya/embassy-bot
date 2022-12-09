@@ -6,7 +6,7 @@ const main = async () => {
   new AppFacade(
     !!process.env.DEV_MODE,
     process.env.BOT_TOKEN || '',
-    parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')
+    1000 * parseInt(process.env.EMBASSY_MONITOR_INTERVAL || '60')
   ).run(ac);
 
   // Enable graceful stop
