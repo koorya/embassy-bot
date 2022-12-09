@@ -23,6 +23,7 @@ export abstract class MonitorLogicBase {
   constructor(
     private _messageAdder: MessegeAdder,
     private _registrator: RegistratorAll,
+    private _monitor: Monitor,
     private _interval_ms: number
   ) {
     this._logger = ScrapeLogger.getInstance().child({
@@ -30,11 +31,10 @@ export abstract class MonitorLogicBase {
     });
   }
 
-  abstract getMonitor(): Monitor;
   abstract isPossibleToRegister(): Promise<boolean>;
 
   async run(signal: AbortSignal) {
-    const mon = this.getMonitor();
+    const mon = this._monitor;
 
     const ac: AbortController[] = [];
     let registrator_number = 0;

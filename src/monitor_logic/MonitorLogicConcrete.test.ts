@@ -30,7 +30,6 @@ describe('MonitorLogic', () => {
     const ac = new AbortController();
 
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -44,6 +43,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
 
@@ -78,7 +78,6 @@ describe('MonitorLogic', () => {
     const ac = new AbortController();
 
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -89,6 +88,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
 
@@ -110,7 +110,6 @@ describe('MonitorLogic', () => {
     const ac = new AbortController();
 
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -119,6 +118,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);
@@ -134,7 +134,6 @@ describe('MonitorLogic', () => {
   it('possibility checker fault', async () => {
     const ac = new AbortController();
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -148,6 +147,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
 
@@ -176,7 +176,6 @@ describe('MonitorLogic', () => {
       .mockRejectedValueOnce('Error, could not register');
 
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -191,6 +190,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);
@@ -212,7 +212,6 @@ describe('MonitorLogic', () => {
     const reg = jest.fn().mockRejectedValue('Error, could not register');
 
     const mon = new MonitorLogicConcrete(
-      new MonitorProd(),
       {
         isPossibleToRegister: jest
           .fn()
@@ -227,6 +226,7 @@ describe('MonitorLogic', () => {
       },
       { addMessage: adder },
       { registerAll: reg },
+      new MonitorProd(),
       25
     );
     setTimeout(() => ac.abort(), 25 * 20);

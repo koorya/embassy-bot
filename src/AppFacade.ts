@@ -49,10 +49,10 @@ export class AppFacade {
 
   private _runMonitor(ctrl: Controllers, ac: AbortController) {
     new MonitorLogicConcrete(
-      new MonitorProd(),
       new EmbassyWorkerCreator(this._isDevMode).createEmbassyMonitor(),
       ctrl.messageController,
       this._createRegistrator(ctrl),
+      new MonitorProd(),
       this._monitor_interval_ms
     ).run(ac.signal);
   }
