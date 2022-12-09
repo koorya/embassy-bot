@@ -1,7 +1,7 @@
 import winston from 'winston';
 import { ScrapeLogger } from '../loggers/logger';
 import { EventEmitter } from 'node:events';
-import { Monitor } from './MonitorLogic';
+import { Monitor } from './MonitorLogicBase';
 import { Listener } from './types';
 enum MonitorStates {
   available,

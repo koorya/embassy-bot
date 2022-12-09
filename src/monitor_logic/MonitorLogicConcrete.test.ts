@@ -1,5 +1,5 @@
 import { MonitorProd } from './Monitor';
-import { MonitorLogicConcrete } from './MonitorLogic';
+import { MonitorLogicConcrete } from './MonitorLogicConcrete';
 
 const mock_info = jest.fn();
 const mock_error = jest.fn();

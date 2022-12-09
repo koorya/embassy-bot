@@ -5,7 +5,7 @@ import { UserController } from '../db_controllers/UserController';
 import { EmbassyRegister } from '../embassy_worker/EmbassyRegister';
 import { ScrapeLogger } from '../loggers/logger';
 import { UserData } from '../requester/EmbassyRequester';
-import { RegistratorAll } from './MonitorLogic';
+import { RegistratorAll } from './MonitorLogicBase';
 
 export interface EmbassyRegisterCreator {
   createEmbassyRegister(userData: UserData, proxy: ProxyCreds): EmbassyRegister;

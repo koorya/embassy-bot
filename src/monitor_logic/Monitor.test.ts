@@ -1,5 +1,5 @@
 import { MonitorProd } from './Monitor';
-import { Monitor } from './MonitorLogic';
+import { Monitor } from './MonitorLogicBase';
 
 const mock_info = jest.fn();
 

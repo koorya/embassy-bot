@@ -1,7 +1,7 @@
 import { Collection, Db } from 'mongodb';
 import winston from 'winston';
 import { ScrapeLogger } from '../loggers/logger';
-import { MessegeAdder } from '../monitor_logic/MonitorLogic';
+import { MessegeAdder } from '../monitor_logic/MonitorLogicBase';
 
 export type MessType = { message: string; recipients: number[] };
 
