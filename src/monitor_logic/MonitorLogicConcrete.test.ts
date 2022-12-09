@@ -26,7 +26,8 @@ describe('MonitorLogic', () => {
     mock_info.mockReset();
     mock_error.mockReset();
   });
-  it('date availabe swith on and off, abort reg, when off', async () => {
+  it(`При появлени дат в промежуток времени. 
+  Сигнал сбрасывается сильно после прохождения замоканных значений. `, async () => {
     const ac = new AbortController();
 
     const mon = new MonitorLogicConcrete(
@@ -49,10 +50,15 @@ describe('MonitorLogic', () => {
 
     setTimeout(() => ac.abort(), 25 * 20);
     const worker = mon.run(ac.signal);
+
     await new Promise<void>((r) => setTimeout(r, 25 * 10));
+
+    // `Должны появиться строго два сообщения в эмитер сообщений`
     expect(adder.mock.calls.length).toBe(2);
     expect(adder.mock.calls[0][0]).toBe('Появились доступные даты');
     expect(adder.mock.calls[1][0]).toBe('Даты закончились');
+
+    // `В логгере должны отражены правильные вызовы событий монитора`
     expect(mock_info.mock.calls.length).toBeGreaterThanOrEqual(10);
     let i = 0;
     const m = mock_info.mock.calls;
@@ -68,8 +74,11 @@ describe('MonitorLogic', () => {
     expect(m[i++]).toMatchObject(['Stop registration', 'MonitorLogic']);
     expect(m[i++]).toMatchObject(['setUnavailable', 'Monitor']);
 
+    // `Метод регистрации должен быть вызван один раз`
     expect(reg).toBeCalledTimes(1);
+
     const reg_signal: AbortSignal = reg.mock.calls[0][0];
+    // `Сигнал для отмены регистрации должен сработать после того, как даты закончились`
     expect(reg_signal.aborted).toBe(true);
     await worker;
   });
