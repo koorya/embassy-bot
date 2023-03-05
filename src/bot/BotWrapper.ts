@@ -1,7 +1,7 @@
 import { Markup, Telegraf } from 'telegraf';
 import { ChatIdController } from '../db_controllers/ChatIdsController';
 import { MessageController } from '../db_controllers/MessageController';
-import { botLog, scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 import { State } from './DialogController/States';
 import { EnterServiceId } from './DialogController/AddUser';
 import { UserController } from '../db_controllers/UserController';
@@ -10,26 +10,21 @@ import { ProxyController } from '../db_controllers/ProxyController';
 import { renderUser } from './renderUser';
 
 export class BotWrapper {
-  bot: Telegraf;
-  private _chatIdController: ChatIdController;
-  private _messageController: MessageController;
-  private _userController: UserController;
-  private _proxyController: ProxyController;
+  private _bot: Telegraf;
 
   constructor(
-    chatIdController: ChatIdController,
-    messageController: MessageController,
-    userController: UserController,
-    proxyController: ProxyController
+    private _controllers: {
+      chatIdController: ChatIdController;
+      messageController: MessageController;
+      userController: UserController;
+      proxyController: ProxyController;
+    },
+    botToken: string
   ) {
-    this.bot = new Telegraf(process.env.BOT_TOKEN || '');
-    this._chatIdController = chatIdController;
-    this._messageController = messageController;
-    this._userController = userController;
-    this._proxyController = proxyController;
+    this._bot = new Telegraf(botToken);
   }
   configureBot() {
-    const bot = this.bot;
+    const bot = this._bot;
 
     const mainMenu = Markup.keyboard(
       ['/add_user', '/list_reg', '/list_notreg', '/list_all', '/list_proxy'],
@@ -37,11 +32,13 @@ export class BotWrapper {
     ).resize();
 
     bot.start(async (ctx) => {
-      const chatIds = await this._chatIdController.getChatIds();
-      botLog.info(`start on chat id: ${ctx.chat.id}`);
+      const chatIds = await this._controllers.chatIdController.getChatIds();
+      ScrapeLogger.getTelegramInstance().info(
+        `start on chat id: ${ctx.chat.id}`
+      );
       if (!chatIds.includes(ctx.chat.id)) {
         chatIds.push(ctx.chat.id);
-        await this._chatIdController.addId(
+        await this._controllers.chatIdController.addId(
           ctx.chat.id,
           ctx.message.from.username || ''
         );
@@ -64,9 +61,9 @@ export class BotWrapper {
           {
             chatId: ctx.chat.id,
             bot,
-            userController: this._userController,
-            chatIdController: this._chatIdController,
-            logger: botLog,
+            userController: this._controllers.userController,
+            chatIdController: this._controllers.chatIdController,
+            logger: ScrapeLogger.getTelegramInstance(),
           },
           {}
         )
@@ -77,41 +74,45 @@ export class BotWrapper {
     bot.hears(
       /\/add_proxy (.*):(.*)@(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d{1,5})/,
       (ctx) => {
-        this._proxyController.addProxy({
+        this._controllers.proxyController.addProxy({
           user: ctx.match[1],
           pass: ctx.match[2],
           host: ctx.match[3],
           port: ctx.match[4],
         });
         ctx.reply('Прокси добавлен');
-        botLog.info(`Прокси добавлен: ${ctx.match}`);
+        ScrapeLogger.getTelegramInstance().info(
+          `Прокси добавлен: ${ctx.match}`
+        );
       }
     );
     bot.hears(/\/list_proxy/, async (ctx) => {
-      const cnt = (await this._proxyController.getProxies()).map((p) => {
-        const used = p.history.length;
-        const when = p.history.pop()?.date.toLocaleDateString();
-        ctx.sendMessage(
-          `${p.host} использован ${when} всего ${used}`,
-          Markup.inlineKeyboard([
-            Markup.button.callback('Удалить', `remove-proxy-${p.host}`),
-          ])
-        );
-        return null;
-      }).length;
+      const cnt = (await this._controllers.proxyController.getProxies()).map(
+        (p) => {
+          const used = p.history.length;
+          const when = p.history.pop()?.date.toLocaleDateString();
+          ctx.sendMessage(
+            `${p.host} использован ${when} всего ${used}`,
+            Markup.inlineKeyboard([
+              Markup.button.callback('Удалить', `remove-proxy-${p.host}`),
+            ])
+          );
+          return null;
+        }
+      ).length;
       if (cnt == 0) ctx.sendMessage('В базе нет ниодного прокси');
-      botLog.info(ctx.match);
+      ScrapeLogger.getTelegramInstance().info(ctx.match);
     });
 
     bot.hears(/\/list_((?:reg)|(?:notreg)|(?:all))/, async (ctx) => {
       const cmd = ctx.match[1] as 'reg' | 'notreg';
       const users =
         cmd == 'reg'
-          ? await this._userController.listRegistered()
+          ? await this._controllers.userController.listRegistered()
           : cmd == 'notreg'
-          ? await this._userController.listNotRegistered()
+          ? await this._controllers.userController.listNotRegistered()
           : cmd == 'all'
-          ? await this._userController.listAll()
+          ? await this._controllers.userController.listAll()
           : [];
 
       const cnt = users.map((user) =>
@@ -130,25 +131,29 @@ export class BotWrapper {
     bot.action(/remove-user-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
-      botLog.info(
-        `Remove user command executed by ${await this._chatIdController.getChatUserById(
+      ScrapeLogger.getTelegramInstance().info(
+        `Remove user command executed by ${await this._controllers.chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; userId to remove - ${ctx.match[1]}`
       );
       ctx.answerCbQuery('Удален');
-      this._userController.removeUser({ _id: new ObjectId(ctx.match[1]) });
+      this._controllers.userController.removeUser({
+        _id: new ObjectId(ctx.match[1]),
+      });
     });
     bot.action(/remove-proxy-(.*)/, async (ctx) => {
       // ctx.reply(ctx.match[0]);
       if (!ctx.chat) return;
-      botLog.info(
-        `Remove poxy command executed by ${await this._chatIdController.getChatUserById(
+      ScrapeLogger.getTelegramInstance().info(
+        `Remove poxy command executed by ${await this._controllers.chatIdController.getChatUserById(
           ctx.chat.id
         )}:${ctx.chat.id}; host to remove - ${ctx.match[1]}`
       );
-      await this._proxyController.removeProxyByHost(ctx.match[1]);
+      await this._controllers.proxyController.removeProxyByHost(ctx.match[1]);
       ctx.answerCbQuery('Удален');
-      this._messageController.addMessage(`Удален прокси ${ctx.match[1]}`);
+      this._controllers.messageController.addMessage(
+        `Удален прокси ${ctx.match[1]}`
+      );
     });
     bot.on('text', async (ctx) => {
       const new_state = await currentState
@@ -171,11 +176,11 @@ export class BotWrapper {
 
   async run(signal: AbortSignal) {
     this.configureBot();
-    this.bot.launch();
+    this._bot.launch();
 
     const onAbort = () => {
       clearTimeout(cycle_timeout);
-      this.bot.stop('SIGINT');
+      this._bot.stop('SIGINT');
     };
     signal.addEventListener('abort', onAbort, { once: true });
     const messageSender = async () => {
@@ -186,7 +191,7 @@ export class BotWrapper {
           1000 * parseInt(process.env.MESSAGE_SENDER_INTERVAL || '1')
         );
       } catch (e) {
-        scrapLog.error(e);
+        ScrapeLogger.getInstance().error(e);
         cycle_timeout = setTimeout(messageSender, 0);
       }
     };
@@ -194,21 +199,26 @@ export class BotWrapper {
   }
 
   async sendOut() {
-    const chatIds = await this._chatIdController.getChatIds();
-    const messages = await this._messageController.getMessagesToSend(
-      chatIds.length
-    );
+    const chatIds = await this._controllers.chatIdController.getChatIds();
+    const messages =
+      await this._controllers.messageController.getMessagesToSend(
+        chatIds.length
+      );
     chatIds.forEach((id) => {
       const to_send = messages.filter(
         ({ recipients }) => !recipients.includes(id)
       );
       to_send.map((mess) =>
-        this.bot.telegram
+        this._bot.telegram
           .sendMessage(id, mess.message)
           .then((r) => {
-            this._messageController.setAsSended(mess, id);
+            this._controllers.messageController.setAsSended(mess, id);
           })
-          .catch(() => botLog.error(`Сообщение не отправлено ${id}`))
+          .catch(() =>
+            ScrapeLogger.getTelegramInstance().error(
+              `Сообщение не отправлено ${id}`
+            )
+          )
       );
     });
   }

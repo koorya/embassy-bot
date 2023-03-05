@@ -1,19 +1,21 @@
-import { EventEmitter } from 'node:events';
 import winston from 'winston';
-import { scrapLog } from '../loggers/logger';
-
+import { ScrapeLogger } from '../loggers/logger';
+import { EventEmitter } from 'node:events';
+import { Monitor } from './MonitorLogicBase';
+import { Listener } from './types';
 enum MonitorStates {
   available,
   unavailable,
 }
-export class Monitor extends EventEmitter {
+
+export class MonitorConcrete extends EventEmitter implements Monitor {
   private _state: MonitorStates = MonitorStates.unavailable;
   private _logger: winston.Logger;
 
   constructor() {
     super();
 
-    this._logger = scrapLog.child({ service: 'Monitor' });
+    this._logger = ScrapeLogger.getInstance().child({ service: 'Monitor' });
   }
   setAvailable() {
     this._logger.info('setAvailable');
@@ -31,5 +33,12 @@ export class Monitor extends EventEmitter {
 
     this._logger.info('switchOff emit');
     this.emit('switchOff');
+  }
+
+  addSwOnListener(listener: Listener) {
+    return this.on('switchOn', listener);
+  }
+  addSwOffListener(listener: Listener) {
+    return this.on('switchOff', listener);
   }
 }

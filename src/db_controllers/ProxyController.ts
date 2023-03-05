@@ -1,6 +1,6 @@
 import { Collection, Db, ObjectId } from 'mongodb';
 import winston from 'winston';
-import { scrapLog } from '../loggers/logger';
+import { ScrapeLogger } from '../loggers/logger';
 import { UserData } from '../requester/EmbassyRequester';
 
 export type ProxyCreds = {
@@ -20,7 +20,9 @@ export class ProxyController {
   constructor(db: Db) {
     this._proxyCollection = db.collection<ProxyWithHistory>('proxies');
 
-    this._logger = scrapLog.child({ service: 'ProxyController' });
+    this._logger = ScrapeLogger.getInstance().child({
+      service: 'ProxyController',
+    });
   }
   async getProxies() {
     this._logger.info('Proxy requested');

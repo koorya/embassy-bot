@@ -12,7 +12,7 @@ import {
 } from './headers/step_five';
 import { getStepFourParams } from './headers/step_four';
 import { getAvailableOptions } from './headers/available_time';
-import { ResType } from '../embassy_worker/EmbassyWorker';
+import { ResType } from '../embassy_worker/ResType';
 import { ProxyCreds } from '../db_controllers/ProxyController';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
@@ -352,6 +352,7 @@ export class EmbassyRequester {
           userData: this._userData,
           date: this._date,
           proxy: this._proxy?.host,
+          isRegistered: true,
         },
       };
     else return { success: false, info: undefined };
